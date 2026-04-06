@@ -9,7 +9,7 @@ import (
 )
 
 const DefaultBaseURL = "https://gateway.thekairos.app/v1"
-const Version = "0.3.0"
+const Version = "0.4.0"
 
 // Client is the Kairos API client.
 type Client struct {
