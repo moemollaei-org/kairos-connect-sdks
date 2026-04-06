@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Documents resource for Kairos SDK."""
 
 from typing import Any, Dict, Optional

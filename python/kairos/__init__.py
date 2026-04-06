@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Kairos SDK — Official Python client for the Kairos API."""
 
 __version__ = "0.1.0"

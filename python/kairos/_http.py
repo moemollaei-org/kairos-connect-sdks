@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Internal HTTP client for Kairos SDK."""
 
 import asyncio

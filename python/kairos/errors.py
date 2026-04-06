@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Error classes for the Kairos SDK."""
 
 

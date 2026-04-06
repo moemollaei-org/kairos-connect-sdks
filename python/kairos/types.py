@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Pydantic models for Kairos API responses."""
 
 from typing import Any, Generic, List, Literal, Optional, TypeVar

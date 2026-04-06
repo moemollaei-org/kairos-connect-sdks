@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Main Kairos client module."""
 
 import os
