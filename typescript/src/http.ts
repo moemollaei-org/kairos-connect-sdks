@@ -135,13 +135,19 @@ export class HttpClient {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'User-Agent': 'kairos-sdk-js/0.1.0',
+      };
+      // Only set Content-Type when there is a body — sending it on GET/DELETE
+      // causes some Cloudflare Workers to return 404 due to request routing.
+      if (body !== undefined) {
+        headers['Content-Type'] = 'application/json';
+      }
+
       const response = await fetch(url, {
         method,
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'User-Agent': 'kairos-sdk-js/0.1.0',
-        },
+        headers,
         body: body ? JSON.stringify(body) : undefined,
         signal: controller.signal,
       });

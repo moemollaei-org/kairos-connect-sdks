@@ -15,7 +15,7 @@ async def test_tasks_list():
         return_value=Response(
             200,
             json={
-                "data": [
+                "tasks": [
                     {
                         "id": "task_1",
                         "team_id": "team_1",
@@ -27,7 +27,11 @@ async def test_tasks_list():
                         "updated_at": "2024-01-01T00:00:00Z",
                     }
                 ],
-                "pagination": {"page": 1, "limit": 20, "total": 1, "has_more": False},
+                "count": 1,
+                "total": 1,
+                "hasMore": False,
+                "limit": 20,
+                "offset": 0,
             },
         )
     )
@@ -297,7 +301,7 @@ def test_tasks_list_sync():
         return_value=Response(
             200,
             json={
-                "data": [
+                "tasks": [
                     {
                         "id": "task_1",
                         "team_id": "team_1",
@@ -309,7 +313,11 @@ def test_tasks_list_sync():
                         "updated_at": "2024-01-01T00:00:00Z",
                     }
                 ],
-                "pagination": {"page": 1, "limit": 20, "total": 1, "has_more": False},
+                "count": 1,
+                "total": 1,
+                "hasMore": False,
+                "limit": 20,
+                "offset": 0,
             },
         )
     )

@@ -1,4 +1,5 @@
 import { HttpClient } from '../http';
+import { normalizePaginated, normalizeSingle } from '../normalize';
 import type {
   Goal,
   CreateGoalInput,
@@ -11,7 +12,6 @@ import type {
   ListTasksOptions,
   ListOptions,
   PaginatedResponse,
-  SingleResponse,
 } from '../types';
 
 export class GoalsResource {
@@ -21,27 +21,34 @@ export class GoalsResource {
 
   async list(options?: ListGoalsOptions): Promise<PaginatedResponse<Goal>> {
     const params: Record<string, unknown> = {};
+    const limit = options?.limit ?? 20;
+    const offset = options?.offset ?? 0;
     if (options) {
       if (options.status) params.status = options.status;
       if (options.limit) params.limit = options.limit;
       if (options.offset) params.offset = options.offset;
     }
-    return this.http.get<PaginatedResponse<Goal>>('/goals', params);
+    // Worker returns: { goals: [...], count, total, hasMore, limit, offset }
+    const raw = await this.http.get<Record<string, unknown>>('/goals', params);
+    return normalizePaginated<Goal>(raw, 'goals', limit, offset);
   }
 
   async get(id: string): Promise<Goal> {
-    const response = await this.http.get<SingleResponse<Goal>>(`/goals/${id}`);
-    return response.data;
+    // Worker returns: { goal: {...} }
+    const raw = await this.http.get<Record<string, unknown>>(`/goals/${id}`);
+    return normalizeSingle<Goal>(raw, 'goal');
   }
 
   async create(input: CreateGoalInput): Promise<Goal> {
-    const response = await this.http.post<SingleResponse<Goal>>('/goals', input);
-    return response.data;
+    // Worker returns: { goal: {...} }
+    const raw = await this.http.post<Record<string, unknown>>('/goals', input);
+    return normalizeSingle<Goal>(raw, 'goal');
   }
 
   async update(id: string, input: UpdateGoalInput): Promise<Goal> {
-    const response = await this.http.patch<SingleResponse<Goal>>(`/goals/${id}`, input);
-    return response.data;
+    // Worker returns: { goal: {...} }
+    const raw = await this.http.patch<Record<string, unknown>>(`/goals/${id}`, input);
+    return normalizeSingle<Goal>(raw, 'goal');
   }
 
   async delete(id: string): Promise<void> {
@@ -53,6 +60,8 @@ export class GoalsResource {
   /** List tasks associated with a goal (requires read:tasks scope) */
   async listTasks(goalId: string, options?: ListTasksOptions): Promise<PaginatedResponse<Task>> {
     const params: Record<string, unknown> = {};
+    const limit = options?.limit ?? 20;
+    const offset = options?.offset ?? 0;
     if (options) {
       if (options.status) params.status = options.status;
       if (options.priority) params.priority = options.priority;
@@ -61,7 +70,8 @@ export class GoalsResource {
       if (options.offset) params.offset = options.offset;
       if (options.search) params.search = options.search;
     }
-    return this.http.get<PaginatedResponse<Task>>(`/goals/${goalId}/tasks`, params);
+    const raw = await this.http.get<Record<string, unknown>>(`/goals/${goalId}/tasks`, params);
+    return normalizePaginated<Task>(raw, 'tasks', limit, offset);
   }
 
   // ─── Comments ─────────────────────────────────────────────────────────
@@ -69,29 +79,32 @@ export class GoalsResource {
   /** List all comments on a goal (requires read:comments scope) */
   async listComments(goalId: string, options?: ListOptions): Promise<PaginatedResponse<Comment>> {
     const params: Record<string, unknown> = {};
+    const limit = options?.limit ?? 20;
+    const offset = options?.offset ?? 0;
     if (options) {
       if (options.limit) params.limit = options.limit;
       if (options.offset) params.offset = options.offset;
     }
-    return this.http.get<PaginatedResponse<Comment>>(`/goals/${goalId}/comments`, params);
+    const raw = await this.http.get<Record<string, unknown>>(`/goals/${goalId}/comments`, params);
+    return normalizePaginated<Comment>(raw, 'comments', limit, offset);
   }
 
   /** Add a comment to a goal (requires write:comments scope) */
   async addComment(goalId: string, input: CreateCommentInput): Promise<Comment> {
-    const response = await this.http.post<SingleResponse<Comment>>(
+    const raw = await this.http.post<Record<string, unknown>>(
       `/goals/${goalId}/comments`,
       input,
     );
-    return response.data;
+    return normalizeSingle<Comment>(raw, 'comment');
   }
 
   /** Update a comment (requires write:comments scope) */
   async updateComment(commentId: string, input: UpdateCommentInput): Promise<Comment> {
-    const response = await this.http.patch<SingleResponse<Comment>>(
+    const raw = await this.http.patch<Record<string, unknown>>(
       `/comments/${commentId}`,
       input,
     );
-    return response.data;
+    return normalizeSingle<Comment>(raw, 'comment');
   }
 
   /** Delete a comment (requires write:comments scope) */

@@ -38,13 +38,12 @@ describe('TasksResource', () => {
         Promise.resolve(
           new Response(
             JSON.stringify({
-              data: mockTasks,
-              pagination: {
-                page: 1,
-                limit: 10,
-                total: 1,
-                has_more: false,
-              },
+              tasks: mockTasks,
+              count: 1,
+              total: 1,
+              hasMore: false,
+              limit: 10,
+              offset: 0,
             }),
             {
               status: 200,
@@ -74,13 +73,12 @@ describe('TasksResource', () => {
         Promise.resolve(
           new Response(
             JSON.stringify({
-              data: [],
-              pagination: {
-                page: 1,
-                limit: 10,
-                total: 0,
-                has_more: false,
-              },
+              tasks: [],
+              count: 0,
+              total: 0,
+              hasMore: false,
+              limit: 10,
+              offset: 0,
             }),
             {
               status: 200,
@@ -137,7 +135,7 @@ describe('TasksResource', () => {
       global.fetch = vi.fn(() =>
         Promise.resolve(
           new Response(
-            JSON.stringify({ data: mockTask }),
+            JSON.stringify({ task: mockTask }),
             {
               status: 200,
               headers: {
@@ -193,7 +191,7 @@ describe('TasksResource', () => {
       global.fetch = vi.fn(() =>
         Promise.resolve(
           new Response(
-            JSON.stringify({ data: createdTask }),
+            JSON.stringify({ task: createdTask }),
             {
               status: 200,
               headers: {
@@ -253,7 +251,7 @@ describe('TasksResource', () => {
       global.fetch = vi.fn(() =>
         Promise.resolve(
           new Response(
-            JSON.stringify({ data: updatedTask }),
+            JSON.stringify({ task: updatedTask }),
             {
               status: 200,
               headers: {
@@ -401,13 +399,12 @@ describe('TasksResource', () => {
         Promise.resolve(
           new Response(
             JSON.stringify({
-              data: mockComments,
-              pagination: {
-                page: 1,
-                limit: 10,
-                total: 1,
-                has_more: false,
-              },
+              comments: mockComments,
+              count: 1,
+              total: 1,
+              hasMore: false,
+              limit: 10,
+              offset: 0,
             }),
             {
               status: 200,
@@ -446,7 +443,7 @@ describe('TasksResource', () => {
       global.fetch = vi.fn(() =>
         Promise.resolve(
           new Response(
-            JSON.stringify({ data: newComment }),
+            JSON.stringify({ comment: newComment }),
             {
               status: 200,
               headers: {

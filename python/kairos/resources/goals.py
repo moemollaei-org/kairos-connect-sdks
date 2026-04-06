@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from .._http import AsyncHttpClient, SyncHttpClient
+from .._normalize import normalize_paginated, normalize_single, normalize_list
 from ..types import Comment, Goal, PaginatedResponse, Task
 
 
@@ -30,15 +31,12 @@ class GoalsResource:
             params["status"] = status
 
         response = await self._http.get("/goals", params=params)
-        return PaginatedResponse[Goal](
-            data=[Goal(**g) for g in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Goal](**normalize_paginated(response, 'goals', Goal, limit=limit, offset=(page - 1) * limit))
 
     async def get(self, goal_id: str) -> Goal:
         """Get a single goal by ID."""
         response = await self._http.get(f"/goals/{goal_id}")
-        return Goal(**response["data"])
+        return normalize_single(response, 'goal', Goal)
 
     async def create(
         self,
@@ -60,7 +58,7 @@ class GoalsResource:
             data["owner_id"] = owner_id
 
         response = await self._http.post("/goals", json_data=data)
-        return Goal(**response["data"])
+        return normalize_single(response, 'goal', Goal)
 
     async def update(
         self,
@@ -91,7 +89,7 @@ class GoalsResource:
             data["owner_id"] = owner_id
 
         response = await self._http.patch(f"/goals/{goal_id}", json_data=data)
-        return Goal(**response["data"])
+        return normalize_single(response, 'goal', Goal)
 
     async def delete(self, goal_id: str) -> None:
         """Delete a goal (requires write:goals scope)."""
@@ -105,10 +103,7 @@ class GoalsResource:
         """List tasks associated with a goal (requires read:tasks scope)."""
         params = {"page": page, "limit": limit}
         response = await self._http.get(f"/goals/{goal_id}/tasks", params=params)
-        return PaginatedResponse[Task](
-            data=[Task(**t) for t in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Task](**normalize_paginated(response, 'tasks', Task, limit=limit, offset=(page - 1) * limit))
 
     # Comments -----------------------------------------------------------------
 
@@ -118,10 +113,7 @@ class GoalsResource:
         """List comments on a goal (requires read:comments scope)."""
         params = {"page": page, "limit": limit}
         response = await self._http.get(f"/goals/{goal_id}/comments", params=params)
-        return PaginatedResponse[Comment](
-            data=[Comment(**c) for c in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
 
     async def add_comment(
         self, goal_id: str, content: str, parent_comment_id: Optional[str] = None
@@ -131,14 +123,14 @@ class GoalsResource:
         if parent_comment_id:
             data["parent_comment_id"] = parent_comment_id
         response = await self._http.post(f"/goals/{goal_id}/comments", json_data=data)
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     async def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment (requires write:comments scope)."""
         response = await self._http.patch(
             f"/comments/{comment_id}", json_data={"content": content}
         )
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     async def delete_comment(self, comment_id: str) -> None:
         """Delete a comment (requires write:comments scope)."""
@@ -168,15 +160,12 @@ class SyncGoalsResource:
             params["status"] = status
 
         response = self._http.get("/goals", params=params)
-        return PaginatedResponse[Goal](
-            data=[Goal(**g) for g in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Goal](**normalize_paginated(response, 'goals', Goal, limit=limit, offset=(page - 1) * limit))
 
     def get(self, goal_id: str) -> Goal:
         """Get a single goal by ID."""
         response = self._http.get(f"/goals/{goal_id}")
-        return Goal(**response["data"])
+        return normalize_single(response, 'goal', Goal)
 
     def create(
         self,
@@ -198,7 +187,7 @@ class SyncGoalsResource:
             data["owner_id"] = owner_id
 
         response = self._http.post("/goals", json_data=data)
-        return Goal(**response["data"])
+        return normalize_single(response, 'goal', Goal)
 
     def update(
         self,
@@ -229,7 +218,7 @@ class SyncGoalsResource:
             data["owner_id"] = owner_id
 
         response = self._http.patch(f"/goals/{goal_id}", json_data=data)
-        return Goal(**response["data"])
+        return normalize_single(response, 'goal', Goal)
 
     def delete(self, goal_id: str) -> None:
         """Delete a goal."""
@@ -243,10 +232,7 @@ class SyncGoalsResource:
         """List tasks associated with a goal."""
         params = {"page": page, "limit": limit}
         response = self._http.get(f"/goals/{goal_id}/tasks", params=params)
-        return PaginatedResponse[Task](
-            data=[Task(**t) for t in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Task](**normalize_paginated(response, 'tasks', Task, limit=limit, offset=(page - 1) * limit))
 
     # Comments -----------------------------------------------------------------
 
@@ -256,10 +242,7 @@ class SyncGoalsResource:
         """List comments on a goal."""
         params = {"page": page, "limit": limit}
         response = self._http.get(f"/goals/{goal_id}/comments", params=params)
-        return PaginatedResponse[Comment](
-            data=[Comment(**c) for c in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
 
     def add_comment(
         self, goal_id: str, content: str, parent_comment_id: Optional[str] = None
@@ -269,14 +252,14 @@ class SyncGoalsResource:
         if parent_comment_id:
             data["parent_comment_id"] = parent_comment_id
         response = self._http.post(f"/goals/{goal_id}/comments", json_data=data)
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment."""
         response = self._http.patch(
             f"/comments/{comment_id}", json_data={"content": content}
         )
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     def delete_comment(self, comment_id: str) -> None:
         """Delete a comment."""

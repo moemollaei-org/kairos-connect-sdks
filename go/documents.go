@@ -8,14 +8,20 @@ type DocumentsService struct {
 }
 
 // List returns a paginated list of documents (requires read:documents scope).
+// Workers return: { documents: [...], total_count, limit, offset }
+// team_id is injected automatically by the gateway proxy from the API key.
 func (s *DocumentsService) List(ctx context.Context, opts *ListDocumentsOptions) ([]Document, *Pagination, error) {
 	if opts == nil {
 		opts = &ListDocumentsOptions{}
 	}
 
 	var resp struct {
-		Data       []Document `json:"data"`
-		Pagination Pagination `json:"pagination"`
+		Documents  []Document `json:"documents"`
+		TotalCount int        `json:"total_count"`
+		Total      int        `json:"total"` // fallback alias
+		HasMore    bool       `json:"hasMore"`
+		Limit      int        `json:"limit"`
+		Offset     int        `json:"offset"`
 	}
 
 	_, err := s.client.get(ctx, "/documents", opts, &resp)
@@ -23,13 +29,18 @@ func (s *DocumentsService) List(ctx context.Context, opts *ListDocumentsOptions)
 		return nil, nil, err
 	}
 
-	return resp.Data, &resp.Pagination, nil
+	total := resp.TotalCount
+	if total == 0 {
+		total = resp.Total
+	}
+	return resp.Documents, nativePagination(total, resp.Limit, resp.Offset, resp.HasMore), nil
 }
 
 // Get returns a single document by ID (requires read:documents scope).
+// Workers return: { document: {...} }
 func (s *DocumentsService) Get(ctx context.Context, id string) (*Document, error) {
 	var resp struct {
-		Data *Document `json:"data"`
+		Document *Document `json:"document"`
 	}
 
 	_, err := s.client.get(ctx, "/documents/"+id, nil, &resp)
@@ -37,13 +48,14 @@ func (s *DocumentsService) Get(ctx context.Context, id string) (*Document, error
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Document, nil
 }
 
 // Create creates a new document (requires write:documents scope).
+// Workers return: { document: {...} }
 func (s *DocumentsService) Create(ctx context.Context, input CreateDocumentInput) (*Document, error) {
 	var resp struct {
-		Data *Document `json:"data"`
+		Document *Document `json:"document"`
 	}
 
 	_, err := s.client.post(ctx, "/documents", input, &resp)
@@ -51,13 +63,14 @@ func (s *DocumentsService) Create(ctx context.Context, input CreateDocumentInput
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Document, nil
 }
 
 // Update updates a document (requires write:documents scope).
+// Workers return: { document: {...} }
 func (s *DocumentsService) Update(ctx context.Context, id string, input UpdateDocumentInput) (*Document, error) {
 	var resp struct {
-		Data *Document `json:"data"`
+		Document *Document `json:"document"`
 	}
 
 	_, err := s.client.patch(ctx, "/documents/"+id, input, &resp)
@@ -65,7 +78,7 @@ func (s *DocumentsService) Update(ctx context.Context, id string, input UpdateDo
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Document, nil
 }
 
 // Delete deletes a document (requires write:documents scope).
@@ -81,8 +94,11 @@ func (s *DocumentsService) ListComments(ctx context.Context, documentID string, 
 	}
 
 	var resp struct {
-		Data       []Comment  `json:"data"`
-		Pagination Pagination `json:"pagination"`
+		Comments []Comment `json:"comments"`
+		Total    int       `json:"total"`
+		HasMore  bool      `json:"hasMore"`
+		Limit    int       `json:"limit"`
+		Offset   int       `json:"offset"`
 	}
 
 	_, err := s.client.get(ctx, "/documents/"+documentID+"/comments", opts, &resp)
@@ -90,13 +106,13 @@ func (s *DocumentsService) ListComments(ctx context.Context, documentID string, 
 		return nil, nil, err
 	}
 
-	return resp.Data, &resp.Pagination, nil
+	return resp.Comments, nativePagination(resp.Total, resp.Limit, resp.Offset, resp.HasMore), nil
 }
 
 // AddComment adds a comment to a document (requires write:comments scope).
 func (s *DocumentsService) AddComment(ctx context.Context, documentID string, input CreateCommentInput) (*Comment, error) {
 	var resp struct {
-		Data *Comment `json:"data"`
+		Comment *Comment `json:"comment"`
 	}
 
 	_, err := s.client.post(ctx, "/documents/"+documentID+"/comments", input, &resp)
@@ -104,13 +120,13 @@ func (s *DocumentsService) AddComment(ctx context.Context, documentID string, in
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Comment, nil
 }
 
 // UpdateComment updates a comment (requires write:comments scope).
 func (s *DocumentsService) UpdateComment(ctx context.Context, commentID string, input UpdateCommentInput) (*Comment, error) {
 	var resp struct {
-		Data *Comment `json:"data"`
+		Comment *Comment `json:"comment"`
 	}
 
 	_, err := s.client.patch(ctx, "/comments/"+commentID, input, &resp)
@@ -118,7 +134,7 @@ func (s *DocumentsService) UpdateComment(ctx context.Context, commentID string, 
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Comment, nil
 }
 
 // DeleteComment deletes a comment (requires write:comments scope).

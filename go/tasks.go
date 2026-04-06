@@ -8,14 +8,19 @@ type TasksService struct {
 }
 
 // List returns a paginated list of tasks.
+// Workers return: { tasks: [...], count, total, hasMore, limit, offset }
 func (s *TasksService) List(ctx context.Context, opts *ListTasksOptions) ([]Task, *Pagination, error) {
 	if opts == nil {
 		opts = &ListTasksOptions{}
 	}
 
 	var resp struct {
-		Data       []Task     `json:"data"`
-		Pagination Pagination `json:"pagination"`
+		Tasks   []Task `json:"tasks"`
+		Count   int    `json:"count"`
+		Total   int    `json:"total"`
+		HasMore bool   `json:"hasMore"`
+		Limit   int    `json:"limit"`
+		Offset  int    `json:"offset"`
 	}
 
 	_, err := s.client.get(ctx, "/tasks", opts, &resp)
@@ -23,13 +28,14 @@ func (s *TasksService) List(ctx context.Context, opts *ListTasksOptions) ([]Task
 		return nil, nil, err
 	}
 
-	return resp.Data, &resp.Pagination, nil
+	return resp.Tasks, nativePagination(resp.Total, resp.Limit, resp.Offset, resp.HasMore), nil
 }
 
 // Get returns a single task by ID.
+// Workers return: { task: {...}, labels: [...] }
 func (s *TasksService) Get(ctx context.Context, id string) (*Task, error) {
 	var resp struct {
-		Data *Task `json:"data"`
+		Task *Task `json:"task"`
 	}
 
 	_, err := s.client.get(ctx, "/tasks/"+id, nil, &resp)
@@ -37,13 +43,14 @@ func (s *TasksService) Get(ctx context.Context, id string) (*Task, error) {
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Task, nil
 }
 
 // Create creates a new task.
+// Workers return: { task: {...} }
 func (s *TasksService) Create(ctx context.Context, input CreateTaskInput) (*Task, error) {
 	var resp struct {
-		Data *Task `json:"data"`
+		Task *Task `json:"task"`
 	}
 
 	_, err := s.client.post(ctx, "/tasks", input, &resp)
@@ -51,13 +58,14 @@ func (s *TasksService) Create(ctx context.Context, input CreateTaskInput) (*Task
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Task, nil
 }
 
 // Update updates a task.
+// Workers return: { task: {...} }
 func (s *TasksService) Update(ctx context.Context, id string, input UpdateTaskInput) (*Task, error) {
 	var resp struct {
-		Data *Task `json:"data"`
+		Task *Task `json:"task"`
 	}
 
 	_, err := s.client.patch(ctx, "/tasks/"+id, input, &resp)
@@ -65,7 +73,7 @@ func (s *TasksService) Update(ctx context.Context, id string, input UpdateTaskIn
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Task, nil
 }
 
 // Delete deletes a task.
@@ -79,7 +87,7 @@ func (s *TasksService) Delete(ctx context.Context, id string) error {
 // ListAssignees returns all assignees for a task.
 func (s *TasksService) ListAssignees(ctx context.Context, taskID string) ([]TaskAssignee, error) {
 	var resp struct {
-		Data []TaskAssignee `json:"data"`
+		Assignees []TaskAssignee `json:"assignees"`
 	}
 
 	_, err := s.client.get(ctx, "/tasks/"+taskID+"/assignees", nil, &resp)
@@ -87,7 +95,7 @@ func (s *TasksService) ListAssignees(ctx context.Context, taskID string) ([]Task
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Assignees, nil
 }
 
 // AddAssignee adds a user as an assignee to a task.
@@ -97,7 +105,7 @@ func (s *TasksService) AddAssignee(ctx context.Context, taskID, userID string) (
 	}{UserID: userID}
 
 	var resp struct {
-		Data *TaskAssignee `json:"data"`
+		Assignee *TaskAssignee `json:"assignee"`
 	}
 
 	_, err := s.client.post(ctx, "/tasks/"+taskID+"/assignees", input, &resp)
@@ -105,7 +113,7 @@ func (s *TasksService) AddAssignee(ctx context.Context, taskID, userID string) (
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Assignee, nil
 }
 
 // RemoveAssignee removes a user from a task's assignees.
@@ -119,7 +127,7 @@ func (s *TasksService) RemoveAssignee(ctx context.Context, taskID, userID string
 // ListLabels returns all labels on a task.
 func (s *TasksService) ListLabels(ctx context.Context, taskID string) ([]TaskLabel, error) {
 	var resp struct {
-		Data []TaskLabel `json:"data"`
+		Labels []TaskLabel `json:"labels"`
 	}
 
 	_, err := s.client.get(ctx, "/tasks/"+taskID+"/labels", nil, &resp)
@@ -127,7 +135,7 @@ func (s *TasksService) ListLabels(ctx context.Context, taskID string) ([]TaskLab
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Labels, nil
 }
 
 // AddLabel adds a label to a task.
@@ -137,7 +145,7 @@ func (s *TasksService) AddLabel(ctx context.Context, taskID, labelID string) (*T
 	}{LabelID: labelID}
 
 	var resp struct {
-		Data *TaskLabel `json:"data"`
+		Label *TaskLabel `json:"label"`
 	}
 
 	_, err := s.client.post(ctx, "/tasks/"+taskID+"/labels", input, &resp)
@@ -145,7 +153,7 @@ func (s *TasksService) AddLabel(ctx context.Context, taskID, labelID string) (*T
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Label, nil
 }
 
 // RemoveLabel removes a label from a task.
@@ -163,8 +171,11 @@ func (s *TasksService) ListSubtasks(ctx context.Context, taskID string, opts *Li
 	}
 
 	var resp struct {
-		Data       []Task     `json:"data"`
-		Pagination Pagination `json:"pagination"`
+		Tasks   []Task `json:"tasks"`
+		Total   int    `json:"total"`
+		HasMore bool   `json:"hasMore"`
+		Limit   int    `json:"limit"`
+		Offset  int    `json:"offset"`
 	}
 
 	_, err := s.client.get(ctx, "/tasks/"+taskID+"/subtasks", opts, &resp)
@@ -172,13 +183,13 @@ func (s *TasksService) ListSubtasks(ctx context.Context, taskID string, opts *Li
 		return nil, nil, err
 	}
 
-	return resp.Data, &resp.Pagination, nil
+	return resp.Tasks, nativePagination(resp.Total, resp.Limit, resp.Offset, resp.HasMore), nil
 }
 
 // CreateSubtask creates a subtask under a parent task.
 func (s *TasksService) CreateSubtask(ctx context.Context, taskID string, input CreateTaskInput) (*Task, error) {
 	var resp struct {
-		Data *Task `json:"data"`
+		Task *Task `json:"task"`
 	}
 
 	_, err := s.client.post(ctx, "/tasks/"+taskID+"/subtasks", input, &resp)
@@ -186,7 +197,7 @@ func (s *TasksService) CreateSubtask(ctx context.Context, taskID string, input C
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Task, nil
 }
 
 // ─── Dependencies ─────────────────────────────────────────────────────────────
@@ -194,7 +205,7 @@ func (s *TasksService) CreateSubtask(ctx context.Context, taskID string, input C
 // ListDependencies returns all dependencies for a task.
 func (s *TasksService) ListDependencies(ctx context.Context, taskID string) ([]TaskDependency, error) {
 	var resp struct {
-		Data []TaskDependency `json:"data"`
+		Dependencies []TaskDependency `json:"dependencies"`
 	}
 
 	_, err := s.client.get(ctx, "/tasks/"+taskID+"/dependencies", nil, &resp)
@@ -202,7 +213,7 @@ func (s *TasksService) ListDependencies(ctx context.Context, taskID string) ([]T
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Dependencies, nil
 }
 
 // AddDependency adds a dependency to a task.
@@ -216,7 +227,7 @@ func (s *TasksService) AddDependency(ctx context.Context, taskID, dependsOnTaskI
 	}
 
 	var resp struct {
-		Data *TaskDependency `json:"data"`
+		Dependency *TaskDependency `json:"dependency"`
 	}
 
 	_, err := s.client.post(ctx, "/tasks/"+taskID+"/dependencies", input, &resp)
@@ -224,7 +235,7 @@ func (s *TasksService) AddDependency(ctx context.Context, taskID, dependsOnTaskI
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Dependency, nil
 }
 
 // RemoveDependency removes a dependency from a task.
@@ -242,8 +253,11 @@ func (s *TasksService) ListComments(ctx context.Context, taskID string, opts *Li
 	}
 
 	var resp struct {
-		Data       []Comment  `json:"data"`
-		Pagination Pagination `json:"pagination"`
+		Comments []Comment `json:"comments"`
+		Total    int       `json:"total"`
+		HasMore  bool      `json:"hasMore"`
+		Limit    int       `json:"limit"`
+		Offset   int       `json:"offset"`
 	}
 
 	_, err := s.client.get(ctx, "/tasks/"+taskID+"/comments", opts, &resp)
@@ -251,13 +265,13 @@ func (s *TasksService) ListComments(ctx context.Context, taskID string, opts *Li
 		return nil, nil, err
 	}
 
-	return resp.Data, &resp.Pagination, nil
+	return resp.Comments, nativePagination(resp.Total, resp.Limit, resp.Offset, resp.HasMore), nil
 }
 
 // AddComment adds a comment to a task.
 func (s *TasksService) AddComment(ctx context.Context, taskID string, input CreateCommentInput) (*Comment, error) {
 	var resp struct {
-		Data *Comment `json:"data"`
+		Comment *Comment `json:"comment"`
 	}
 
 	_, err := s.client.post(ctx, "/tasks/"+taskID+"/comments", input, &resp)
@@ -265,13 +279,13 @@ func (s *TasksService) AddComment(ctx context.Context, taskID string, input Crea
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Comment, nil
 }
 
 // UpdateComment updates a comment.
 func (s *TasksService) UpdateComment(ctx context.Context, commentID string, input UpdateCommentInput) (*Comment, error) {
 	var resp struct {
-		Data *Comment `json:"data"`
+		Comment *Comment `json:"comment"`
 	}
 
 	_, err := s.client.patch(ctx, "/comments/"+commentID, input, &resp)
@@ -279,7 +293,7 @@ func (s *TasksService) UpdateComment(ctx context.Context, commentID string, inpu
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Comment, nil
 }
 
 // DeleteComment deletes a comment.

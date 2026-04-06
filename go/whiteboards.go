@@ -8,14 +8,20 @@ type WhiteboardsService struct {
 }
 
 // List returns a paginated list of whiteboards (requires read:whiteboards scope).
+// Workers return: { whiteboards: [...], total_count, limit, offset }
+// team_id is injected automatically by the gateway proxy from the API key.
 func (s *WhiteboardsService) List(ctx context.Context, opts *ListOptions) ([]Whiteboard, *Pagination, error) {
 	if opts == nil {
 		opts = &ListOptions{}
 	}
 
 	var resp struct {
-		Data       []Whiteboard `json:"data"`
-		Pagination Pagination   `json:"pagination"`
+		Whiteboards []Whiteboard `json:"whiteboards"`
+		TotalCount  int          `json:"total_count"`
+		Total       int          `json:"total"` // fallback alias
+		HasMore     bool         `json:"hasMore"`
+		Limit       int          `json:"limit"`
+		Offset      int          `json:"offset"`
 	}
 
 	_, err := s.client.get(ctx, "/whiteboards", opts, &resp)
@@ -23,13 +29,18 @@ func (s *WhiteboardsService) List(ctx context.Context, opts *ListOptions) ([]Whi
 		return nil, nil, err
 	}
 
-	return resp.Data, &resp.Pagination, nil
+	total := resp.TotalCount
+	if total == 0 {
+		total = resp.Total
+	}
+	return resp.Whiteboards, nativePagination(total, resp.Limit, resp.Offset, resp.HasMore), nil
 }
 
 // Get returns a single whiteboard by ID (requires read:whiteboards scope).
+// Workers return: { whiteboard: {...} }
 func (s *WhiteboardsService) Get(ctx context.Context, id string) (*Whiteboard, error) {
 	var resp struct {
-		Data *Whiteboard `json:"data"`
+		Whiteboard *Whiteboard `json:"whiteboard"`
 	}
 
 	_, err := s.client.get(ctx, "/whiteboards/"+id, nil, &resp)
@@ -37,13 +48,14 @@ func (s *WhiteboardsService) Get(ctx context.Context, id string) (*Whiteboard, e
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Whiteboard, nil
 }
 
 // Create creates a new whiteboard (requires write:whiteboards scope).
+// Workers return: { whiteboard: {...} }
 func (s *WhiteboardsService) Create(ctx context.Context, input CreateWhiteboardInput) (*Whiteboard, error) {
 	var resp struct {
-		Data *Whiteboard `json:"data"`
+		Whiteboard *Whiteboard `json:"whiteboard"`
 	}
 
 	_, err := s.client.post(ctx, "/whiteboards", input, &resp)
@@ -51,13 +63,14 @@ func (s *WhiteboardsService) Create(ctx context.Context, input CreateWhiteboardI
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Whiteboard, nil
 }
 
 // Update updates a whiteboard (requires write:whiteboards scope).
+// Workers return: { whiteboard: {...} }
 func (s *WhiteboardsService) Update(ctx context.Context, id string, input UpdateWhiteboardInput) (*Whiteboard, error) {
 	var resp struct {
-		Data *Whiteboard `json:"data"`
+		Whiteboard *Whiteboard `json:"whiteboard"`
 	}
 
 	_, err := s.client.patch(ctx, "/whiteboards/"+id, input, &resp)
@@ -65,7 +78,7 @@ func (s *WhiteboardsService) Update(ctx context.Context, id string, input Update
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Whiteboard, nil
 }
 
 // Delete deletes a whiteboard (requires write:whiteboards scope).
@@ -81,8 +94,11 @@ func (s *WhiteboardsService) ListComments(ctx context.Context, whiteboardID stri
 	}
 
 	var resp struct {
-		Data       []Comment  `json:"data"`
-		Pagination Pagination `json:"pagination"`
+		Comments []Comment `json:"comments"`
+		Total    int       `json:"total"`
+		HasMore  bool      `json:"hasMore"`
+		Limit    int       `json:"limit"`
+		Offset   int       `json:"offset"`
 	}
 
 	_, err := s.client.get(ctx, "/whiteboards/"+whiteboardID+"/comments", opts, &resp)
@@ -90,13 +106,13 @@ func (s *WhiteboardsService) ListComments(ctx context.Context, whiteboardID stri
 		return nil, nil, err
 	}
 
-	return resp.Data, &resp.Pagination, nil
+	return resp.Comments, nativePagination(resp.Total, resp.Limit, resp.Offset, resp.HasMore), nil
 }
 
 // AddComment adds a comment to a whiteboard (requires write:comments scope).
 func (s *WhiteboardsService) AddComment(ctx context.Context, whiteboardID string, input CreateCommentInput) (*Comment, error) {
 	var resp struct {
-		Data *Comment `json:"data"`
+		Comment *Comment `json:"comment"`
 	}
 
 	_, err := s.client.post(ctx, "/whiteboards/"+whiteboardID+"/comments", input, &resp)
@@ -104,13 +120,13 @@ func (s *WhiteboardsService) AddComment(ctx context.Context, whiteboardID string
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Comment, nil
 }
 
 // UpdateComment updates a comment (requires write:comments scope).
 func (s *WhiteboardsService) UpdateComment(ctx context.Context, commentID string, input UpdateCommentInput) (*Comment, error) {
 	var resp struct {
-		Data *Comment `json:"data"`
+		Comment *Comment `json:"comment"`
 	}
 
 	_, err := s.client.patch(ctx, "/comments/"+commentID, input, &resp)
@@ -118,7 +134,7 @@ func (s *WhiteboardsService) UpdateComment(ctx context.Context, commentID string
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Comment, nil
 }
 
 // DeleteComment deletes a comment (requires write:comments scope).

@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from .._http import AsyncHttpClient, SyncHttpClient
+from .._normalize import normalize_paginated, normalize_single, normalize_list
 from ..types import Comment, Document, PaginatedResponse
 
 
@@ -39,15 +40,12 @@ class DocumentsResource:
             params["search"] = search
 
         response = await self._http.get("/documents", params=params)
-        return PaginatedResponse[Document](
-            data=[Document(**d) for d in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Document](**normalize_paginated(response, 'documents', Document, limit=limit, offset=(page - 1) * limit))
 
     async def get(self, document_id: str) -> Document:
         """Get a single document by ID (requires read:documents scope)."""
         response = await self._http.get(f"/documents/{document_id}")
-        return Document(**response["data"])
+        return normalize_single(response, 'document', Document)
 
     async def create(
         self,
@@ -70,7 +68,7 @@ class DocumentsResource:
             data["icon"] = icon
 
         response = await self._http.post("/documents", json_data=data)
-        return Document(**response["data"])
+        return normalize_single(response, 'document', Document)
 
     async def update(
         self,
@@ -92,7 +90,7 @@ class DocumentsResource:
             data["parent_id"] = parent_id
 
         response = await self._http.patch(f"/documents/{document_id}", json_data=data)
-        return Document(**response["data"])
+        return normalize_single(response, 'document', Document)
 
     async def delete(self, document_id: str) -> None:
         """Delete a document (requires write:documents scope)."""
@@ -106,10 +104,7 @@ class DocumentsResource:
         """List comments on a document (requires read:comments scope)."""
         params = {"page": page, "limit": limit}
         response = await self._http.get(f"/documents/{document_id}/comments", params=params)
-        return PaginatedResponse[Comment](
-            data=[Comment(**c) for c in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
 
     async def add_comment(
         self, document_id: str, content: str, parent_comment_id: Optional[str] = None
@@ -119,14 +114,14 @@ class DocumentsResource:
         if parent_comment_id:
             data["parent_comment_id"] = parent_comment_id
         response = await self._http.post(f"/documents/{document_id}/comments", json_data=data)
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     async def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment (requires write:comments scope)."""
         response = await self._http.patch(
             f"/comments/{comment_id}", json_data={"content": content}
         )
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     async def delete_comment(self, comment_id: str) -> None:
         """Delete a comment (requires write:comments scope)."""
@@ -165,15 +160,12 @@ class SyncDocumentsResource:
             params["search"] = search
 
         response = self._http.get("/documents", params=params)
-        return PaginatedResponse[Document](
-            data=[Document(**d) for d in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Document](**normalize_paginated(response, 'documents', Document, limit=limit, offset=(page - 1) * limit))
 
     def get(self, document_id: str) -> Document:
         """Get a single document by ID."""
         response = self._http.get(f"/documents/{document_id}")
-        return Document(**response["data"])
+        return normalize_single(response, 'document', Document)
 
     def create(
         self,
@@ -196,7 +188,7 @@ class SyncDocumentsResource:
             data["icon"] = icon
 
         response = self._http.post("/documents", json_data=data)
-        return Document(**response["data"])
+        return normalize_single(response, 'document', Document)
 
     def update(
         self,
@@ -218,7 +210,7 @@ class SyncDocumentsResource:
             data["parent_id"] = parent_id
 
         response = self._http.patch(f"/documents/{document_id}", json_data=data)
-        return Document(**response["data"])
+        return normalize_single(response, 'document', Document)
 
     def delete(self, document_id: str) -> None:
         """Delete a document."""
@@ -232,10 +224,7 @@ class SyncDocumentsResource:
         """List comments on a document."""
         params = {"page": page, "limit": limit}
         response = self._http.get(f"/documents/{document_id}/comments", params=params)
-        return PaginatedResponse[Comment](
-            data=[Comment(**c) for c in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
 
     def add_comment(
         self, document_id: str, content: str, parent_comment_id: Optional[str] = None
@@ -245,14 +234,14 @@ class SyncDocumentsResource:
         if parent_comment_id:
             data["parent_comment_id"] = parent_comment_id
         response = self._http.post(f"/documents/{document_id}/comments", json_data=data)
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment."""
         response = self._http.patch(
             f"/comments/{comment_id}", json_data={"content": content}
         )
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     def delete_comment(self, comment_id: str) -> None:
         """Delete a comment."""

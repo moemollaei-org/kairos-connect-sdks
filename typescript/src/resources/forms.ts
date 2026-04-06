@@ -1,4 +1,5 @@
 import { HttpClient } from '../http';
+import { normalizePaginated, normalizeSingle } from '../normalize';
 import type {
   Form,
   CreateFormInput,
@@ -10,71 +11,90 @@ import type {
   ListFormsOptions,
   ListOptions,
   PaginatedResponse,
-  SingleResponse,
 } from '../types';
 
+/**
+ * Forms resource.
+ *
+ * The underlying Kairos worker exposes forms as "instances" at
+ * /api/v1/forms/instances.  The gateway routes /v1/forms/instances/* to
+ * the FORMS worker, so the SDK uses /forms/instances as its base path.
+ * Submissions are "records" in the worker's data model.
+ */
 export class FormsResource {
+  private readonly BASE = '/forms/instances';
+
   constructor(private http: HttpClient) {}
 
   // ─── Core CRUD ───────────────────────────────────────────────────────
 
   async list(options?: ListFormsOptions): Promise<PaginatedResponse<Form>> {
     const params: Record<string, unknown> = {};
+    const limit = options?.limit ?? 50;
+    const offset = options?.offset ?? 0;
     if (options) {
-      if (options.is_active !== undefined) params.is_active = options.is_active;
       if (options.limit) params.limit = options.limit;
       if (options.offset) params.offset = options.offset;
     }
-    return this.http.get<PaginatedResponse<Form>>('/forms', params);
+    // Worker returns: { instances: [...], count, total, has_more }
+    // team_id is injected automatically by the gateway proxy.
+    const raw = await this.http.get<Record<string, unknown>>(this.BASE, params);
+    return normalizePaginated<Form>(raw, 'instances', limit, offset);
   }
 
   async get(id: string): Promise<Form> {
-    const response = await this.http.get<SingleResponse<Form>>(`/forms/${id}`);
-    return response.data;
+    // Worker returns: { instance: {...} }
+    const raw = await this.http.get<Record<string, unknown>>(`${this.BASE}/${id}`);
+    return normalizeSingle<Form>(raw, 'instance');
   }
 
   async create(input: CreateFormInput): Promise<Form> {
-    const response = await this.http.post<SingleResponse<Form>>('/forms', input);
-    return response.data;
+    // Worker returns: { instance: {...} }
+    const raw = await this.http.post<Record<string, unknown>>(this.BASE, input);
+    return normalizeSingle<Form>(raw, 'instance');
   }
 
   async update(id: string, input: UpdateFormInput): Promise<Form> {
-    const response = await this.http.patch<SingleResponse<Form>>(`/forms/${id}`, input);
-    return response.data;
+    // Worker returns: { instance: {...} }
+    const raw = await this.http.patch<Record<string, unknown>>(`${this.BASE}/${id}`, input);
+    return normalizeSingle<Form>(raw, 'instance');
   }
 
   async delete(id: string): Promise<void> {
-    await this.http.delete(`/forms/${id}`);
+    await this.http.delete(`${this.BASE}/${id}`);
   }
 
-  // ─── Submissions ──────────────────────────────────────────────────────
+  // ─── Submissions (records) ────────────────────────────────────────────
 
-  /** List all submissions for a form (requires read:forms scope) */
+  /** List all records (submissions) for a form instance (requires read:forms scope) */
   async listSubmissions(
     formId: string,
     options?: ListOptions,
   ): Promise<PaginatedResponse<FormSubmission>> {
     const params: Record<string, unknown> = {};
+    const limit = options?.limit ?? 50;
+    const offset = options?.offset ?? 0;
     if (options) {
       if (options.limit) params.limit = options.limit;
       if (options.offset) params.offset = options.offset;
     }
-    return this.http.get<PaginatedResponse<FormSubmission>>(
-      `/forms/${formId}/submissions`,
+    const raw = await this.http.get<Record<string, unknown>>(
+      `${this.BASE}/${formId}/records`,
       params,
     );
+    return normalizePaginated<FormSubmission>(raw, 'records', limit, offset);
   }
 
-  /** Submit a response to a form (requires write:forms scope) */
+  /** Submit a record for a form instance (requires write:forms scope) */
   async submit(
     formId: string,
     data: Record<string, unknown>,
   ): Promise<FormSubmission> {
-    const response = await this.http.post<SingleResponse<FormSubmission>>(
-      `/forms/${formId}/submissions`,
+    const raw = await this.http.post<Record<string, unknown>>(
+      `${this.BASE}/${formId}/records`,
       { data },
     );
-    return response.data;
+    return normalizeSingle<FormSubmission>(raw, 'record');
   }
 
   // ─── Comments ─────────────────────────────────────────────────────────
@@ -82,29 +102,35 @@ export class FormsResource {
   /** List all comments on a form (requires read:comments scope) */
   async listComments(formId: string, options?: ListOptions): Promise<PaginatedResponse<Comment>> {
     const params: Record<string, unknown> = {};
+    const limit = options?.limit ?? 20;
+    const offset = options?.offset ?? 0;
     if (options) {
       if (options.limit) params.limit = options.limit;
       if (options.offset) params.offset = options.offset;
     }
-    return this.http.get<PaginatedResponse<Comment>>(`/forms/${formId}/comments`, params);
+    const raw = await this.http.get<Record<string, unknown>>(
+      `/forms/${formId}/comments`,
+      params,
+    );
+    return normalizePaginated<Comment>(raw, 'comments', limit, offset);
   }
 
   /** Add a comment to a form (requires write:comments scope) */
   async addComment(formId: string, input: CreateCommentInput): Promise<Comment> {
-    const response = await this.http.post<SingleResponse<Comment>>(
+    const raw = await this.http.post<Record<string, unknown>>(
       `/forms/${formId}/comments`,
       input,
     );
-    return response.data;
+    return normalizeSingle<Comment>(raw, 'comment');
   }
 
   /** Update a comment (requires write:comments scope) */
   async updateComment(commentId: string, input: UpdateCommentInput): Promise<Comment> {
-    const response = await this.http.patch<SingleResponse<Comment>>(
+    const raw = await this.http.patch<Record<string, unknown>>(
       `/comments/${commentId}`,
       input,
     );
-    return response.data;
+    return normalizeSingle<Comment>(raw, 'comment');
   }
 
   /** Delete a comment (requires write:comments scope) */

@@ -20,7 +20,7 @@ func TestTasksList(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": []map[string]interface{}{
+			"tasks": []map[string]interface{}{
 				{
 					"id":            "task-1",
 					"team_id":       "team-1",
@@ -39,12 +39,11 @@ func TestTasksList(t *testing.T) {
 					"updated_at":    time.Now().UTC().Format(time.RFC3339),
 				},
 			},
-			"pagination": map[string]interface{}{
-				"page":     1,
-				"limit":    10,
-				"total":    1,
-				"has_more": false,
-			},
+			"total":     1,
+			"hasMore":   false,
+			"limit":     10,
+			"count":     1,
+			"offset":    0,
 		}
 		json.NewEncoder(w).Encode(response)
 	}))
@@ -76,7 +75,7 @@ func TestTasksGet(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": map[string]interface{}{
+			"task": map[string]interface{}{
 				"id":            "task-1",
 				"team_id":       "team-1",
 				"title":         "Test Task",
@@ -154,7 +153,7 @@ func TestTasksCreate(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": map[string]interface{}{
+			"task": map[string]interface{}{
 				"id":         "task-2",
 				"team_id":    "team-1",
 				"title":      "New Task",
@@ -192,7 +191,7 @@ func TestTasksUpdate(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": map[string]interface{}{
+			"task": map[string]interface{}{
 				"id":     "task-1",
 				"title":  "Updated Task",
 				"status": "in_progress",
@@ -291,7 +290,7 @@ func TestRateLimitError(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 
 			response := map[string]interface{}{
-				"data": map[string]interface{}{
+				"task": map[string]interface{}{
 					"id":    "task-1",
 					"title": "Test Task",
 				},
@@ -324,7 +323,7 @@ func TestTasksAddComment(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": map[string]interface{}{
+			"comment": map[string]interface{}{
 				"id":         "comment-1",
 				"task_id":    "task-1",
 				"content":    "Great work!",
@@ -355,7 +354,7 @@ func TestTasksListComments(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": []map[string]interface{}{
+			"comments": []map[string]interface{}{
 				{
 					"id":         "comment-1",
 					"task_id":    "task-1",
@@ -365,12 +364,10 @@ func TestTasksListComments(t *testing.T) {
 					"updated_at": time.Now().UTC().Format(time.RFC3339),
 				},
 			},
-			"pagination": map[string]interface{}{
-				"page":     1,
-				"limit":    10,
-				"total":    1,
-				"has_more": false,
-			},
+			"total":     1,
+			"hasMore":   false,
+			"limit":     10,
+			"offset":    0,
 		}
 		json.NewEncoder(w).Encode(response)
 	}))

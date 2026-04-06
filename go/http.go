@@ -30,8 +30,12 @@ func (c *Client) do(ctx context.Context, method, path string, body interface{}, 
 	}
 
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "kairos-sdk-go/"+Version)
+	// Only set Content-Type when there is a body — sending it on GET/DELETE
+	// causes some Cloudflare Workers to return 404 due to request routing.
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 
 	var lastErr error
 	for attempt := 0; attempt <= c.maxRetries; attempt++ {

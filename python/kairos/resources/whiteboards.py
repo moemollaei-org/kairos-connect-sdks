@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from .._http import AsyncHttpClient, SyncHttpClient
+from .._normalize import normalize_paginated, normalize_single, normalize_list
 from ..types import Comment, PaginatedResponse, Whiteboard
 
 
@@ -30,15 +31,12 @@ class WhiteboardsResource:
             params["search"] = search
 
         response = await self._http.get("/whiteboards", params=params)
-        return PaginatedResponse[Whiteboard](
-            data=[Whiteboard(**w) for w in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Whiteboard](**normalize_paginated(response, 'whiteboards', Whiteboard, limit=limit, offset=(page - 1) * limit))
 
     async def get(self, whiteboard_id: str) -> Whiteboard:
         """Get a single whiteboard by ID (requires read:whiteboards scope)."""
         response = await self._http.get(f"/whiteboards/{whiteboard_id}")
-        return Whiteboard(**response["data"])
+        return normalize_single(response, 'whiteboard', Whiteboard)
 
     async def create(
         self,
@@ -55,7 +53,7 @@ class WhiteboardsResource:
             data["content"] = content
 
         response = await self._http.post("/whiteboards", json_data=data)
-        return Whiteboard(**response["data"])
+        return normalize_single(response, 'whiteboard', Whiteboard)
 
     async def update(
         self,
@@ -77,7 +75,7 @@ class WhiteboardsResource:
             data["is_public"] = is_public
 
         response = await self._http.patch(f"/whiteboards/{whiteboard_id}", json_data=data)
-        return Whiteboard(**response["data"])
+        return normalize_single(response, 'whiteboard', Whiteboard)
 
     async def delete(self, whiteboard_id: str) -> None:
         """Delete a whiteboard (requires write:whiteboards scope)."""
@@ -91,10 +89,7 @@ class WhiteboardsResource:
         """List comments on a whiteboard (requires read:comments scope)."""
         params = {"page": page, "limit": limit}
         response = await self._http.get(f"/whiteboards/{whiteboard_id}/comments", params=params)
-        return PaginatedResponse[Comment](
-            data=[Comment(**c) for c in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
 
     async def add_comment(
         self, whiteboard_id: str, content: str, parent_comment_id: Optional[str] = None
@@ -104,14 +99,14 @@ class WhiteboardsResource:
         if parent_comment_id:
             data["parent_comment_id"] = parent_comment_id
         response = await self._http.post(f"/whiteboards/{whiteboard_id}/comments", json_data=data)
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     async def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment (requires write:comments scope)."""
         response = await self._http.patch(
             f"/comments/{comment_id}", json_data={"content": content}
         )
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     async def delete_comment(self, comment_id: str) -> None:
         """Delete a comment (requires write:comments scope)."""
@@ -141,15 +136,12 @@ class SyncWhiteboardsResource:
             params["search"] = search
 
         response = self._http.get("/whiteboards", params=params)
-        return PaginatedResponse[Whiteboard](
-            data=[Whiteboard(**w) for w in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Whiteboard](**normalize_paginated(response, 'whiteboards', Whiteboard, limit=limit, offset=(page - 1) * limit))
 
     def get(self, whiteboard_id: str) -> Whiteboard:
         """Get a single whiteboard by ID."""
         response = self._http.get(f"/whiteboards/{whiteboard_id}")
-        return Whiteboard(**response["data"])
+        return normalize_single(response, 'whiteboard', Whiteboard)
 
     def create(
         self,
@@ -166,7 +158,7 @@ class SyncWhiteboardsResource:
             data["content"] = content
 
         response = self._http.post("/whiteboards", json_data=data)
-        return Whiteboard(**response["data"])
+        return normalize_single(response, 'whiteboard', Whiteboard)
 
     def update(
         self,
@@ -188,7 +180,7 @@ class SyncWhiteboardsResource:
             data["is_public"] = is_public
 
         response = self._http.patch(f"/whiteboards/{whiteboard_id}", json_data=data)
-        return Whiteboard(**response["data"])
+        return normalize_single(response, 'whiteboard', Whiteboard)
 
     def delete(self, whiteboard_id: str) -> None:
         """Delete a whiteboard."""
@@ -202,10 +194,7 @@ class SyncWhiteboardsResource:
         """List comments on a whiteboard."""
         params = {"page": page, "limit": limit}
         response = self._http.get(f"/whiteboards/{whiteboard_id}/comments", params=params)
-        return PaginatedResponse[Comment](
-            data=[Comment(**c) for c in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
 
     def add_comment(
         self, whiteboard_id: str, content: str, parent_comment_id: Optional[str] = None
@@ -215,14 +204,14 @@ class SyncWhiteboardsResource:
         if parent_comment_id:
             data["parent_comment_id"] = parent_comment_id
         response = self._http.post(f"/whiteboards/{whiteboard_id}/comments", json_data=data)
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment."""
         response = self._http.patch(
             f"/comments/{comment_id}", json_data={"content": content}
         )
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     def delete_comment(self, comment_id: str) -> None:
         """Delete a comment."""

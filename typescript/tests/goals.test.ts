@@ -30,13 +30,12 @@ describe('GoalsResource', () => {
         Promise.resolve(
           new Response(
             JSON.stringify({
-              data: mockGoals,
-              pagination: {
-                page: 1,
-                limit: 10,
-                total: 1,
-                has_more: false,
-              },
+              goals: mockGoals,
+              count: 1,
+              total: 1,
+              hasMore: false,
+              limit: 10,
+              offset: 0,
             }),
             {
               status: 200,
@@ -65,13 +64,12 @@ describe('GoalsResource', () => {
         Promise.resolve(
           new Response(
             JSON.stringify({
-              data: [],
-              pagination: {
-                page: 1,
-                limit: 10,
-                total: 0,
-                has_more: false,
-              },
+              goals: [],
+              count: 0,
+              total: 0,
+              hasMore: false,
+              limit: 10,
+              offset: 0,
             }),
             {
               status: 200,
@@ -114,7 +112,7 @@ describe('GoalsResource', () => {
       global.fetch = vi.fn(() =>
         Promise.resolve(
           new Response(
-            JSON.stringify({ data: mockGoal }),
+            JSON.stringify({ goal: mockGoal }),
             {
               status: 200,
               headers: {
@@ -159,7 +157,7 @@ describe('GoalsResource', () => {
       global.fetch = vi.fn(() =>
         Promise.resolve(
           new Response(
-            JSON.stringify({ data: createdGoal }),
+            JSON.stringify({ goal: createdGoal }),
             {
               status: 200,
               headers: {
@@ -211,7 +209,7 @@ describe('GoalsResource', () => {
       global.fetch = vi.fn(() =>
         Promise.resolve(
           new Response(
-            JSON.stringify({ data: updatedGoal }),
+            JSON.stringify({ goal: updatedGoal }),
             {
               status: 200,
               headers: {
@@ -263,13 +261,12 @@ describe('GoalsResource', () => {
         Promise.resolve(
           new Response(
             JSON.stringify({
-              data: mockTasks,
-              pagination: {
-                page: 1,
-                limit: 10,
-                total: 1,
-                has_more: false,
-              },
+              tasks: mockTasks,
+              count: 1,
+              total: 1,
+              hasMore: false,
+              limit: 10,
+              offset: 0,
             }),
             {
               status: 200,

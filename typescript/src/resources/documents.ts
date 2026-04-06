@@ -1,4 +1,5 @@
 import { HttpClient } from '../http';
+import { normalizePaginated, normalizeSingle } from '../normalize';
 import type {
   Document,
   CreateDocumentInput,
@@ -9,7 +10,6 @@ import type {
   ListDocumentsOptions,
   ListOptions,
   PaginatedResponse,
-  SingleResponse,
 } from '../types';
 
 export class DocumentsResource {
@@ -19,6 +19,8 @@ export class DocumentsResource {
 
   async list(options?: ListDocumentsOptions): Promise<PaginatedResponse<Document>> {
     const params: Record<string, unknown> = {};
+    const limit = options?.limit ?? 50;
+    const offset = options?.offset ?? 0;
     if (options) {
       if (options.teamspace_id) params.teamspace_id = options.teamspace_id;
       if (options.parent_id) params.parent_id = options.parent_id;
@@ -27,22 +29,28 @@ export class DocumentsResource {
       if (options.offset) params.offset = options.offset;
       if (options.search) params.search = options.search;
     }
-    return this.http.get<PaginatedResponse<Document>>('/documents', params);
+    // Worker returns: { documents: [...], total_count, limit, offset }
+    // team_id is injected automatically by the gateway proxy.
+    const raw = await this.http.get<Record<string, unknown>>('/documents', params);
+    return normalizePaginated<Document>(raw, 'documents', limit, offset);
   }
 
   async get(id: string): Promise<Document> {
-    const response = await this.http.get<SingleResponse<Document>>(`/documents/${id}`);
-    return response.data;
+    // Worker returns: { document: {...} }
+    const raw = await this.http.get<Record<string, unknown>>(`/documents/${id}`);
+    return normalizeSingle<Document>(raw, 'document');
   }
 
   async create(input: CreateDocumentInput): Promise<Document> {
-    const response = await this.http.post<SingleResponse<Document>>('/documents', input);
-    return response.data;
+    // Worker returns: { document: {...} }
+    const raw = await this.http.post<Record<string, unknown>>('/documents', input);
+    return normalizeSingle<Document>(raw, 'document');
   }
 
   async update(id: string, input: UpdateDocumentInput): Promise<Document> {
-    const response = await this.http.patch<SingleResponse<Document>>(`/documents/${id}`, input);
-    return response.data;
+    // Worker returns: { document: {...} }
+    const raw = await this.http.patch<Record<string, unknown>>(`/documents/${id}`, input);
+    return normalizeSingle<Document>(raw, 'document');
   }
 
   async delete(id: string): Promise<void> {
@@ -57,32 +65,35 @@ export class DocumentsResource {
     options?: ListOptions,
   ): Promise<PaginatedResponse<Comment>> {
     const params: Record<string, unknown> = {};
+    const limit = options?.limit ?? 20;
+    const offset = options?.offset ?? 0;
     if (options) {
       if (options.limit) params.limit = options.limit;
       if (options.offset) params.offset = options.offset;
     }
-    return this.http.get<PaginatedResponse<Comment>>(
+    const raw = await this.http.get<Record<string, unknown>>(
       `/documents/${documentId}/comments`,
       params,
     );
+    return normalizePaginated<Comment>(raw, 'comments', limit, offset);
   }
 
   /** Add a comment to a document (requires write:comments scope) */
   async addComment(documentId: string, input: CreateCommentInput): Promise<Comment> {
-    const response = await this.http.post<SingleResponse<Comment>>(
+    const raw = await this.http.post<Record<string, unknown>>(
       `/documents/${documentId}/comments`,
       input,
     );
-    return response.data;
+    return normalizeSingle<Comment>(raw, 'comment');
   }
 
   /** Update a comment (requires write:comments scope) */
   async updateComment(commentId: string, input: UpdateCommentInput): Promise<Comment> {
-    const response = await this.http.patch<SingleResponse<Comment>>(
+    const raw = await this.http.patch<Record<string, unknown>>(
       `/comments/${commentId}`,
       input,
     );
-    return response.data;
+    return normalizeSingle<Comment>(raw, 'comment');
   }
 
   /** Delete a comment (requires write:comments scope) */

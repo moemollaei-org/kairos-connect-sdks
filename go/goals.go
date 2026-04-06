@@ -8,14 +8,18 @@ type GoalsService struct {
 }
 
 // List returns a paginated list of goals.
+// Workers return: { goals: [...], count, total, hasMore, limit, offset }
 func (s *GoalsService) List(ctx context.Context, opts *ListOptions) ([]Goal, *Pagination, error) {
 	if opts == nil {
 		opts = &ListOptions{}
 	}
 
 	var resp struct {
-		Data       []Goal     `json:"data"`
-		Pagination Pagination `json:"pagination"`
+		Goals   []Goal `json:"goals"`
+		Total   int    `json:"total"`
+		HasMore bool   `json:"hasMore"`
+		Limit   int    `json:"limit"`
+		Offset  int    `json:"offset"`
 	}
 
 	_, err := s.client.get(ctx, "/goals", opts, &resp)
@@ -23,13 +27,14 @@ func (s *GoalsService) List(ctx context.Context, opts *ListOptions) ([]Goal, *Pa
 		return nil, nil, err
 	}
 
-	return resp.Data, &resp.Pagination, nil
+	return resp.Goals, nativePagination(resp.Total, resp.Limit, resp.Offset, resp.HasMore), nil
 }
 
 // Get returns a single goal by ID.
+// Workers return: { goal: {...} }
 func (s *GoalsService) Get(ctx context.Context, id string) (*Goal, error) {
 	var resp struct {
-		Data *Goal `json:"data"`
+		Goal *Goal `json:"goal"`
 	}
 
 	_, err := s.client.get(ctx, "/goals/"+id, nil, &resp)
@@ -37,13 +42,14 @@ func (s *GoalsService) Get(ctx context.Context, id string) (*Goal, error) {
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Goal, nil
 }
 
 // Create creates a new goal.
+// Workers return: { goal: {...} }
 func (s *GoalsService) Create(ctx context.Context, input CreateGoalInput) (*Goal, error) {
 	var resp struct {
-		Data *Goal `json:"data"`
+		Goal *Goal `json:"goal"`
 	}
 
 	_, err := s.client.post(ctx, "/goals", input, &resp)
@@ -51,13 +57,14 @@ func (s *GoalsService) Create(ctx context.Context, input CreateGoalInput) (*Goal
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Goal, nil
 }
 
 // Update updates a goal.
+// Workers return: { goal: {...} }
 func (s *GoalsService) Update(ctx context.Context, id string, input UpdateGoalInput) (*Goal, error) {
 	var resp struct {
-		Data *Goal `json:"data"`
+		Goal *Goal `json:"goal"`
 	}
 
 	_, err := s.client.patch(ctx, "/goals/"+id, input, &resp)
@@ -65,7 +72,7 @@ func (s *GoalsService) Update(ctx context.Context, id string, input UpdateGoalIn
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Goal, nil
 }
 
 // Delete deletes a goal.
@@ -81,8 +88,11 @@ func (s *GoalsService) ListTasks(ctx context.Context, goalID string, opts *ListT
 	}
 
 	var resp struct {
-		Data       []Task     `json:"data"`
-		Pagination Pagination `json:"pagination"`
+		Tasks   []Task `json:"tasks"`
+		Total   int    `json:"total"`
+		HasMore bool   `json:"hasMore"`
+		Limit   int    `json:"limit"`
+		Offset  int    `json:"offset"`
 	}
 
 	_, err := s.client.get(ctx, "/goals/"+goalID+"/tasks", opts, &resp)
@@ -90,7 +100,7 @@ func (s *GoalsService) ListTasks(ctx context.Context, goalID string, opts *ListT
 		return nil, nil, err
 	}
 
-	return resp.Data, &resp.Pagination, nil
+	return resp.Tasks, nativePagination(resp.Total, resp.Limit, resp.Offset, resp.HasMore), nil
 }
 
 // ListComments returns comments on a goal (requires read:comments scope).
@@ -100,8 +110,11 @@ func (s *GoalsService) ListComments(ctx context.Context, goalID string, opts *Li
 	}
 
 	var resp struct {
-		Data       []Comment  `json:"data"`
-		Pagination Pagination `json:"pagination"`
+		Comments []Comment `json:"comments"`
+		Total    int       `json:"total"`
+		HasMore  bool      `json:"hasMore"`
+		Limit    int       `json:"limit"`
+		Offset   int       `json:"offset"`
 	}
 
 	_, err := s.client.get(ctx, "/goals/"+goalID+"/comments", opts, &resp)
@@ -109,13 +122,13 @@ func (s *GoalsService) ListComments(ctx context.Context, goalID string, opts *Li
 		return nil, nil, err
 	}
 
-	return resp.Data, &resp.Pagination, nil
+	return resp.Comments, nativePagination(resp.Total, resp.Limit, resp.Offset, resp.HasMore), nil
 }
 
 // AddComment adds a comment to a goal (requires write:comments scope).
 func (s *GoalsService) AddComment(ctx context.Context, goalID string, input CreateCommentInput) (*Comment, error) {
 	var resp struct {
-		Data *Comment `json:"data"`
+		Comment *Comment `json:"comment"`
 	}
 
 	_, err := s.client.post(ctx, "/goals/"+goalID+"/comments", input, &resp)
@@ -123,13 +136,13 @@ func (s *GoalsService) AddComment(ctx context.Context, goalID string, input Crea
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Comment, nil
 }
 
 // UpdateComment updates a comment (requires write:comments scope).
 func (s *GoalsService) UpdateComment(ctx context.Context, commentID string, input UpdateCommentInput) (*Comment, error) {
 	var resp struct {
-		Data *Comment `json:"data"`
+		Comment *Comment `json:"comment"`
 	}
 
 	_, err := s.client.patch(ctx, "/comments/"+commentID, input, &resp)
@@ -137,7 +150,7 @@ func (s *GoalsService) UpdateComment(ctx context.Context, commentID string, inpu
 		return nil, err
 	}
 
-	return resp.Data, nil
+	return resp.Comment, nil
 }
 
 // DeleteComment deletes a comment (requires write:comments scope).

@@ -15,7 +15,7 @@ func TestGoalsList(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": []map[string]interface{}{
+			"goals": []map[string]interface{}{
 				{
 					"id":          "goal-1",
 					"team_id":     "team-1",
@@ -27,12 +27,11 @@ func TestGoalsList(t *testing.T) {
 					"updated_at":  time.Now().UTC().Format(time.RFC3339),
 				},
 			},
-			"pagination": map[string]interface{}{
-				"page":     1,
-				"limit":    10,
-				"total":    1,
-				"has_more": false,
-			},
+			"total":     1,
+			"hasMore":   false,
+			"limit":     10,
+			"count":     1,
+			"offset":    0,
 		}
 		json.NewEncoder(w).Encode(response)
 	}))
@@ -64,7 +63,7 @@ func TestGoalsGet(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": map[string]interface{}{
+			"goal": map[string]interface{}{
 				"id":          "goal-1",
 				"team_id":     "team-1",
 				"title":       "Q1 Objectives",
@@ -106,7 +105,7 @@ func TestGoalsCreate(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": map[string]interface{}{
+			"goal": map[string]interface{}{
 				"id":         "goal-2",
 				"team_id":    "team-1",
 				"title":      "New Goal",
@@ -144,7 +143,7 @@ func TestGoalsUpdate(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": map[string]interface{}{
+			"goal": map[string]interface{}{
 				"id":     "goal-1",
 				"title":  "Updated Goal",
 				"status": "completed",
@@ -174,7 +173,7 @@ func TestGoalsListTasks(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": []map[string]interface{}{
+			"tasks": []map[string]interface{}{
 				{
 					"id":         "task-1",
 					"team_id":    "team-1",
@@ -186,12 +185,11 @@ func TestGoalsListTasks(t *testing.T) {
 					"updated_at": time.Now().UTC().Format(time.RFC3339),
 				},
 			},
-			"pagination": map[string]interface{}{
-				"page":     1,
-				"limit":    10,
-				"total":    1,
-				"has_more": false,
-			},
+			"total":     1,
+			"hasMore":   false,
+			"limit":     10,
+			"count":     1,
+			"offset":    0,
 		}
 		json.NewEncoder(w).Encode(response)
 	}))

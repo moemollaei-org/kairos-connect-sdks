@@ -15,7 +15,7 @@ func TestDocumentsList(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": []map[string]interface{}{
+			"documents": []map[string]interface{}{
 				{
 					"id":         "doc-1",
 					"team_id":    "team-1",
@@ -26,12 +26,10 @@ func TestDocumentsList(t *testing.T) {
 					"updated_at": time.Now().UTC().Format(time.RFC3339),
 				},
 			},
-			"pagination": map[string]interface{}{
-				"page":     1,
-				"limit":    10,
-				"total":    1,
-				"has_more": false,
-			},
+			"total":     1,
+			"hasMore":   false,
+			"limit":     10,
+			"offset":    0,
 		}
 		json.NewEncoder(w).Encode(response)
 	}))
@@ -63,7 +61,7 @@ func TestDocumentsGet(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": map[string]interface{}{
+			"document": map[string]interface{}{
 				"id":         "doc-1",
 				"team_id":    "team-1",
 				"title":      "Q1 Plan",

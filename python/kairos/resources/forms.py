@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from .._http import AsyncHttpClient, SyncHttpClient
+from .._normalize import normalize_paginated, normalize_single, normalize_list
 from ..types import Comment, Form, FormSubmission, PaginatedResponse
 
 
@@ -29,16 +30,13 @@ class FormsResource:
         if is_active is not None:
             params["is_active"] = is_active
 
-        response = await self._http.get("/forms", params=params)
-        return PaginatedResponse[Form](
-            data=[Form(**f) for f in response["data"]],
-            pagination=response["pagination"],
-        )
+        response = await self._http.get("/forms/instances", params=params)
+        return PaginatedResponse[Form](**normalize_paginated(response, 'instances', Form, limit=limit, offset=(page - 1) * limit))
 
     async def get(self, form_id: str) -> Form:
         """Get a single form by ID (requires read:forms scope)."""
-        response = await self._http.get(f"/forms/{form_id}")
-        return Form(**response["data"])
+        response = await self._http.get(f"/forms/instances/{form_id}")
+        return normalize_single(response, 'instance', Form)
 
     async def create(
         self,
@@ -57,8 +55,8 @@ class FormsResource:
         if settings is not None:
             data["settings"] = settings
 
-        response = await self._http.post("/forms", json_data=data)
-        return Form(**response["data"])
+        response = await self._http.post("/forms/instances", json_data=data)
+        return normalize_single(response, 'instance', Form)
 
     async def update(
         self,
@@ -82,12 +80,12 @@ class FormsResource:
         if is_active is not None:
             data["is_active"] = is_active
 
-        response = await self._http.patch(f"/forms/{form_id}", json_data=data)
-        return Form(**response["data"])
+        response = await self._http.patch(f"/forms/instances/{form_id}", json_data=data)
+        return normalize_single(response, 'instance', Form)
 
     async def delete(self, form_id: str) -> None:
         """Delete a form (requires write:forms scope)."""
-        await self._http.delete(f"/forms/{form_id}")
+        await self._http.delete(f"/forms/instances/{form_id}")
 
     # Submissions --------------------------------------------------------------
 
@@ -96,11 +94,8 @@ class FormsResource:
     ) -> PaginatedResponse[FormSubmission]:
         """List submissions for a form (requires read:forms scope)."""
         params = {"page": page, "limit": limit}
-        response = await self._http.get(f"/forms/{form_id}/submissions", params=params)
-        return PaginatedResponse[FormSubmission](
-            data=[FormSubmission(**s) for s in response["data"]],
-            pagination=response["pagination"],
-        )
+        response = await self._http.get(f"/forms/instances/{form_id}/records", params=params)
+        return PaginatedResponse[FormSubmission](**normalize_paginated(response, 'records', FormSubmission, limit=limit, offset=(page - 1) * limit))
 
     async def submit(
         self,
@@ -109,10 +104,10 @@ class FormsResource:
     ) -> FormSubmission:
         """Submit a response to a form (requires write:forms scope)."""
         response = await self._http.post(
-            f"/forms/{form_id}/submissions",
+            f"/forms/instances/{form_id}/records",
             json_data={"data": data},
         )
-        return FormSubmission(**response["data"])
+        return normalize_single(response, 'record', FormSubmission)
 
     # Comments -----------------------------------------------------------------
 
@@ -122,10 +117,7 @@ class FormsResource:
         """List comments on a form (requires read:comments scope)."""
         params = {"page": page, "limit": limit}
         response = await self._http.get(f"/forms/{form_id}/comments", params=params)
-        return PaginatedResponse[Comment](
-            data=[Comment(**c) for c in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
 
     async def add_comment(
         self, form_id: str, content: str, parent_comment_id: Optional[str] = None
@@ -135,14 +127,14 @@ class FormsResource:
         if parent_comment_id:
             data["parent_comment_id"] = parent_comment_id
         response = await self._http.post(f"/forms/{form_id}/comments", json_data=data)
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     async def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment (requires write:comments scope)."""
         response = await self._http.patch(
             f"/comments/{comment_id}", json_data={"content": content}
         )
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     async def delete_comment(self, comment_id: str) -> None:
         """Delete a comment (requires write:comments scope)."""
@@ -171,16 +163,13 @@ class SyncFormsResource:
         if is_active is not None:
             params["is_active"] = is_active
 
-        response = self._http.get("/forms", params=params)
-        return PaginatedResponse[Form](
-            data=[Form(**f) for f in response["data"]],
-            pagination=response["pagination"],
-        )
+        response = self._http.get("/forms/instances", params=params)
+        return PaginatedResponse[Form](**normalize_paginated(response, 'instances', Form, limit=limit, offset=(page - 1) * limit))
 
     def get(self, form_id: str) -> Form:
         """Get a single form by ID."""
-        response = self._http.get(f"/forms/{form_id}")
-        return Form(**response["data"])
+        response = self._http.get(f"/forms/instances/{form_id}")
+        return normalize_single(response, 'instance', Form)
 
     def create(
         self,
@@ -199,8 +188,8 @@ class SyncFormsResource:
         if settings is not None:
             data["settings"] = settings
 
-        response = self._http.post("/forms", json_data=data)
-        return Form(**response["data"])
+        response = self._http.post("/forms/instances", json_data=data)
+        return normalize_single(response, 'instance', Form)
 
     def update(
         self,
@@ -224,12 +213,12 @@ class SyncFormsResource:
         if is_active is not None:
             data["is_active"] = is_active
 
-        response = self._http.patch(f"/forms/{form_id}", json_data=data)
-        return Form(**response["data"])
+        response = self._http.patch(f"/forms/instances/{form_id}", json_data=data)
+        return normalize_single(response, 'instance', Form)
 
     def delete(self, form_id: str) -> None:
         """Delete a form."""
-        self._http.delete(f"/forms/{form_id}")
+        self._http.delete(f"/forms/instances/{form_id}")
 
     # Submissions --------------------------------------------------------------
 
@@ -238,11 +227,8 @@ class SyncFormsResource:
     ) -> PaginatedResponse[FormSubmission]:
         """List submissions for a form."""
         params = {"page": page, "limit": limit}
-        response = self._http.get(f"/forms/{form_id}/submissions", params=params)
-        return PaginatedResponse[FormSubmission](
-            data=[FormSubmission(**s) for s in response["data"]],
-            pagination=response["pagination"],
-        )
+        response = self._http.get(f"/forms/instances/{form_id}/records", params=params)
+        return PaginatedResponse[FormSubmission](**normalize_paginated(response, 'records', FormSubmission, limit=limit, offset=(page - 1) * limit))
 
     def submit(
         self,
@@ -251,10 +237,10 @@ class SyncFormsResource:
     ) -> FormSubmission:
         """Submit a response to a form."""
         response = self._http.post(
-            f"/forms/{form_id}/submissions",
+            f"/forms/instances/{form_id}/records",
             json_data={"data": data},
         )
-        return FormSubmission(**response["data"])
+        return normalize_single(response, 'record', FormSubmission)
 
     # Comments -----------------------------------------------------------------
 
@@ -264,10 +250,7 @@ class SyncFormsResource:
         """List comments on a form."""
         params = {"page": page, "limit": limit}
         response = self._http.get(f"/forms/{form_id}/comments", params=params)
-        return PaginatedResponse[Comment](
-            data=[Comment(**c) for c in response["data"]],
-            pagination=response["pagination"],
-        )
+        return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
 
     def add_comment(
         self, form_id: str, content: str, parent_comment_id: Optional[str] = None
@@ -277,14 +260,14 @@ class SyncFormsResource:
         if parent_comment_id:
             data["parent_comment_id"] = parent_comment_id
         response = self._http.post(f"/forms/{form_id}/comments", json_data=data)
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment."""
         response = self._http.patch(
             f"/comments/{comment_id}", json_data={"content": content}
         )
-        return Comment(**response["data"])
+        return normalize_single(response, 'comment', Comment)
 
     def delete_comment(self, comment_id: str) -> None:
         """Delete a comment."""
