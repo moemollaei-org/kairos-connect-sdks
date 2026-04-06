@@ -8,7 +8,7 @@ on:
 
 jobs:
   publish:
-    name: Publish @kairos/sdk to npm
+    name: Publish @kairos-connect/sdk to npm
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -17,6 +17,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -47,6 +52,6 @@ jobs:
 
       - name: Publish to npm
         working-directory: typescript
-        run: npm publish --provenance
+        run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
