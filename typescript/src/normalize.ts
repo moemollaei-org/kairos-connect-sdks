@@ -32,12 +32,17 @@ export function normalizePaginated<T>(
   // Workers use "total" or "total_count" for the grand total.
   const total = Number(raw['total'] ?? raw['total_count'] ?? raw['count'] ?? 0);
 
-  // Workers use "hasMore" (camelCase) or "has_more" (snake_case).
-  const hasMore = Boolean(raw['hasMore'] ?? raw['has_more'] ?? false);
-
-  // Actual limit returned by the worker (may differ from requested).
+  // Actual limit/offset returned by the worker (may differ from requested).
   const resolvedLimit = Number(raw['limit'] ?? limit);
   const resolvedOffset = Number(raw['offset'] ?? offset);
+
+  // Workers use "hasMore" (camelCase) or "has_more" (snake_case).
+  // When neither field is present (e.g. documents/whiteboards only send total_count),
+  // compute it from total vs. items returned so pagination is always correct.
+  const explicitHasMore = raw['hasMore'] ?? raw['has_more'];
+  const hasMore = explicitHasMore !== undefined && explicitHasMore !== null
+    ? Boolean(explicitHasMore)
+    : total > 0 && (resolvedOffset + (items as unknown[]).length) < total;
 
   return {
     data: items,

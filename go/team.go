@@ -1,6 +1,9 @@
 package kairos
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 // TeamService provides team operations.
 type TeamService struct {
@@ -20,7 +23,7 @@ func (s *TeamService) Get(ctx context.Context) (*Team, error) {
 	}
 
 	if len(resp.Teams) == 0 {
-		return nil, &APIError{Code: "not_found", Message: "no team found for this API key", StatusCode: 404}
+		return nil, fmt.Errorf("kairos: no team found for this API key")
 	}
 
 	return &resp.Teams[0], nil

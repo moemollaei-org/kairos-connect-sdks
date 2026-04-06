@@ -1,6 +1,9 @@
 package kairos
 
-import "context"
+import (
+	"context"
+	"strconv"
+)
 
 // TasksService provides task operations.
 type TasksService struct {
@@ -141,16 +144,15 @@ func (s *TasksService) ListComments(ctx context.Context, taskID string, opts *Li
 		return nil, nil, err
 	}
 
-	// total may be a string or int
+	// total may arrive as a JSON number or string (worker returns "1" as a string)
 	total := 0
 	switch v := resp.Total.(type) {
 	case float64:
 		total = int(v)
 	case string:
-		// ignore parse errors
-	case nil:
-	default:
-		_ = v
+		if n, err := strconv.Atoi(v); err == nil {
+			total = n
+		}
 	}
 
 	return resp.Comments, nativePagination(total, resp.Limit, resp.Offset, resp.HasMore), nil

@@ -15,3 +15,20 @@ func nativePagination(total, limit, offset int, hasMore bool) *Pagination {
 		HasMore: hasMore,
 	}
 }
+
+// computedPagination is like nativePagination but infers hasMore when the
+// worker doesn't return an explicit hasMore/has_more field (e.g. documents and
+// whiteboards only return total_count).
+func computedPagination(total, limit, offset, returned int) *Pagination {
+	page := 1
+	if limit > 0 {
+		page = offset/limit + 1
+	}
+	hasMore := total > 0 && (offset+returned) < total
+	return &Pagination{
+		Page:    page,
+		Limit:   limit,
+		Total:   total,
+		HasMore: hasMore,
+	}
+}

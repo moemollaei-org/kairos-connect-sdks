@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 from .._http import AsyncHttpClient, SyncHttpClient
 from .._normalize import normalize_paginated, normalize_single, normalize_list
-from ..types import Comment, Form, FormSubmission, PaginatedResponse
+from ..types import Form, FormSubmission, PaginatedResponse
 
 
 # ─── Async ───────────────────────────────────────────────────────────────────
@@ -109,37 +109,6 @@ class FormsResource:
         )
         return normalize_single(response, 'record', FormSubmission)
 
-    # Comments -----------------------------------------------------------------
-
-    async def list_comments(
-        self, form_id: str, page: int = 1, limit: int = 20
-    ) -> PaginatedResponse[Comment]:
-        """List comments on a form (requires read:comments scope)."""
-        params = {"page": page, "limit": limit}
-        response = await self._http.get(f"/forms/{form_id}/comments", params=params)
-        return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
-
-    async def add_comment(
-        self, form_id: str, content: str, parent_comment_id: Optional[str] = None
-    ) -> Comment:
-        """Add a comment to a form (requires write:comments scope)."""
-        data: Dict[str, Any] = {"content": content}
-        if parent_comment_id:
-            data["parent_comment_id"] = parent_comment_id
-        response = await self._http.post(f"/forms/{form_id}/comments", json_data=data)
-        return normalize_single(response, 'comment', Comment)
-
-    async def update_comment(self, comment_id: str, content: str) -> Comment:
-        """Update a comment (requires write:comments scope)."""
-        response = await self._http.put(
-            f"/comments/{comment_id}", json_data={"content": content}
-        )
-        return normalize_single(response, 'comment', Comment)
-
-    async def delete_comment(self, comment_id: str) -> None:
-        """Delete a comment (requires write:comments scope)."""
-        await self._http.delete(f"/comments/{comment_id}")
-
 
 # ─── Sync ────────────────────────────────────────────────────────────────────
 
@@ -241,34 +210,3 @@ class SyncFormsResource:
             json_data={"data": data},
         )
         return normalize_single(response, 'record', FormSubmission)
-
-    # Comments -----------------------------------------------------------------
-
-    def list_comments(
-        self, form_id: str, page: int = 1, limit: int = 20
-    ) -> PaginatedResponse[Comment]:
-        """List comments on a form."""
-        params = {"page": page, "limit": limit}
-        response = self._http.get(f"/forms/{form_id}/comments", params=params)
-        return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
-
-    def add_comment(
-        self, form_id: str, content: str, parent_comment_id: Optional[str] = None
-    ) -> Comment:
-        """Add a comment to a form."""
-        data: Dict[str, Any] = {"content": content}
-        if parent_comment_id:
-            data["parent_comment_id"] = parent_comment_id
-        response = self._http.post(f"/forms/{form_id}/comments", json_data=data)
-        return normalize_single(response, 'comment', Comment)
-
-    def update_comment(self, comment_id: str, content: str) -> Comment:
-        """Update a comment."""
-        response = self._http.put(
-            f"/comments/{comment_id}", json_data={"content": content}
-        )
-        return normalize_single(response, 'comment', Comment)
-
-    def delete_comment(self, comment_id: str) -> None:
-        """Delete a comment."""
-        self._http.delete(f"/comments/{comment_id}")

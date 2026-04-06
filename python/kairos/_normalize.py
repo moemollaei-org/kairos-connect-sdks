@@ -35,10 +35,16 @@ def normalize_paginated(
     items = [model(**item) for item in items_raw]
 
     total = int(raw.get("total") or raw.get("total_count") or raw.get("count") or 0)
-    has_more = bool(raw.get("hasMore") or raw.get("has_more") or False)
     resolved_limit = int(raw.get("limit") or limit)
     resolved_offset = int(raw.get("offset") or offset)
     page = (resolved_offset // resolved_limit + 1) if resolved_limit > 0 else 1
+    # Some workers (e.g. documents, whiteboards) only return total_count without
+    # a hasMore/has_more field — compute it from total vs. returned items.
+    explicit_has_more = raw.get("hasMore") if raw.get("hasMore") is not None else raw.get("has_more")
+    if explicit_has_more is not None:
+        has_more = bool(explicit_has_more)
+    else:
+        has_more = total > 0 and (resolved_offset + len(items)) < total
 
     return {
         "data": items,

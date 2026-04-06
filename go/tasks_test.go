@@ -182,7 +182,7 @@ func TestTasksCreate(t *testing.T) {
 
 func TestTasksUpdate(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPatch {
+		if r.Method != http.MethodPut {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
