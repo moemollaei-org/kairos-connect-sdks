@@ -39,3 +39,6 @@ python_files = ["test_*.py"]
 
 [tool.hatch.version]
 path = "kairos/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kairos"]
