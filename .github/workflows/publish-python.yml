@@ -46,5 +46,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: python/dist/
-        # Uses PyPI Trusted Publishing — configure the GitHub environment
-        # in your PyPI project settings (no API token needed).
+          verbose: true
