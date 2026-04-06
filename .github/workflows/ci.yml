@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── TypeScript ─────────────────────────────────────────────
+  typescript:
+    name: TypeScript — Typecheck, Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: |
+      github.event_name == 'push' ||
+      contains(github.event.pull_request.files.*.filename, 'typescript/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        working-directory: typescript
+        run: bun install --frozen-lockfile
+      - name: Typecheck
+        working-directory: typescript
+        run: bun run typecheck
+      - name: Test
+        working-directory: typescript
+        run: bun run test
+      - name: Build
+        working-directory: typescript
+        run: bun run build
+
+  # ── Python ────────────────────────────────────────────────
+  python:
+    name: Python — Test (3.${{ matrix.minor }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        minor: ["9", "11", "13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.${{ matrix.minor }}"
+      - name: Install dependencies
+        working-directory: python
+        run: pip install -e ".[dev]"
+      - name: Test
+        working-directory: python
+        run: pytest --tb=short
+
+  # ── Go ────────────────────────────────────────────────────
+  go:
+    name: Go — Vet & Test (${{ matrix.go }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        go: ["1.21", "1.22", "1.23"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Verify dependencies
+        working-directory: go
+        run: go mod verify
+      - name: Vet
+        working-directory: go
+        run: go vet ./...
+      - name: Test
+        working-directory: go
+        run: go test -v -race ./...

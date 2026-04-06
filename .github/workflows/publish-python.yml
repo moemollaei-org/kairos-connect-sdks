@@ -1,0 +1,50 @@
+name: Publish Python SDK
+
+# Trigger by pushing a tag like: python/v1.2.3
+on:
+  push:
+    tags:
+      - 'python/v*.*.*'
+
+jobs:
+  publish:
+    name: Publish kairos-sdk to PyPI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write  # Required for PyPI Trusted Publishing
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build tools
+        run: pip install hatch
+
+      - name: Set version from tag
+        working-directory: python
+        run: |
+          TAG="${GITHUB_REF_NAME}"        # e.g. python/v0.1.0
+          VERSION="${TAG#python/v}"       # strip prefix → 0.1.0
+          sed -i "s/__version__ = \".*\"/__version__ = \"$VERSION\"/" kairos/__init__.py
+
+      - name: Install dependencies and test
+        working-directory: python
+        run: |
+          pip install -e ".[dev]"
+          pytest --tb=short
+
+      - name: Build distribution
+        working-directory: python
+        run: hatch build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/dist/
+        # Uses PyPI Trusted Publishing — configure the GitHub environment
+        # in your PyPI project settings (no API token needed).

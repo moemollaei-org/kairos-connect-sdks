@@ -1,0 +1,38 @@
+name: Release Go SDK
+
+# Trigger by pushing a tag like: go/v1.2.3
+# Go modules are version-controlled via git tags — no build artifact needed.
+on:
+  push:
+    tags:
+      - 'go/v*.*.*'
+
+jobs:
+  release:
+    name: Test & create GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Verify dependencies
+        working-directory: go
+        run: go mod verify
+
+      - name: Test
+        working-directory: go
+        run: go test -v -race ./...
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+        # Consumers install with:
+        # go get github.com/kairos-connect/kairos-sdks/go@v0.1.0

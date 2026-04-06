@@ -1,0 +1,52 @@
+name: Publish TypeScript SDK
+
+# Trigger by pushing a tag like: typescript/v1.2.3
+on:
+  push:
+    tags:
+      - 'typescript/v*.*.*'
+
+jobs:
+  publish:
+    name: Publish @kairos/sdk to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write  # Required for npm provenance
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: typescript
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        working-directory: typescript
+        run: bun run typecheck
+
+      - name: Test
+        working-directory: typescript
+        run: bun run test
+
+      - name: Build
+        working-directory: typescript
+        run: bun run build
+
+      - name: Set version from tag
+        working-directory: typescript
+        run: |
+          TAG="${GITHUB_REF_NAME}"          # e.g. typescript/v0.1.0
+          VERSION="${TAG#typescript/v}"     # strip prefix → 0.1.0
+          npm version "$VERSION" --no-git-tag-version
+
+      - name: Publish to npm
+        working-directory: typescript
+        run: npm publish --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
