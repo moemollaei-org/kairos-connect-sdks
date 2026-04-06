@@ -4,7 +4,7 @@ Official SDKs for the [Kairos](https://thekairos.app) API. All SDKs target `gate
 
 | SDK | Package | Docs |
 |-----|---------|------|
-| [TypeScript / JavaScript](./typescript) | [`@kairos/sdk`](https://www.npmjs.com/package/@kairos/sdk) | [Docs](https://thekairos.app/docs/sdks/javascript) |
+| [TypeScript / JavaScript](./typescript) | [`@kairos-connect/sdk`](https://www.npmjs.com/package/@kairos-connect/sdk) | [Docs](https://thekairos.app/docs/sdks/javascript) |
 | [Python](./python) | [`kairos-sdk`](https://pypi.org/project/kairos-sdk/) | [Docs](https://thekairos.app/docs/sdks/python) |
 | [Go](./go) | [`github.com/moemollaei-org/kairos-connect-sdks/go`](https://pkg.go.dev/github.com/moemollaei-org/kairos-connect-sdks/go) | [Docs](https://thekairos.app/docs/sdks/go) |
 
@@ -13,13 +13,13 @@ Official SDKs for the [Kairos](https://thekairos.app) API. All SDKs target `gate
 ### TypeScript / JavaScript
 
 ```bash
-npm install @kairos/sdk
+npm install @kairos-connect/sdk
 # or
-bun add @kairos/sdk
+bun add @kairos-connect/sdk
 ```
 
 ```ts
-import { Kairos } from '@kairos/sdk';
+import { Kairos } from '@kairos-connect/sdk';
 
 const kairos = new Kairos({ apiKey: 'kairos_sk_...' });
 const tasks = await kairos.tasks.list();
@@ -80,7 +80,7 @@ git tag go/v0.1.0 && git push --tags
 
 ```
 kairos-sdks/
-├── typescript/   # @kairos/sdk — zero-dep, ESM + CJS, Vitest
+├── typescript/   # @kairos-connect/sdk — zero-dep, ESM + CJS, Vitest
 ├── python/       # kairos-sdk — httpx + Pydantic v2, async + sync
 └── go/           # stdlib only, context-aware, options pattern
 ```

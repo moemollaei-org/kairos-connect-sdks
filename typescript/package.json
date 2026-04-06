@@ -1,5 +1,5 @@
 {
-  "name": "@kairos/sdk",
+  "name": "@kairos-connect/sdk",
   "version": "0.1.0",
   "description": "Official TypeScript/JavaScript SDK for Kairos",
   "type": "module",

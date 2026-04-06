@@ -16,25 +16,25 @@ Official TypeScript/JavaScript SDK for Kairos project management API. Build appl
 ### npm
 
 ```bash
-npm install @kairos/sdk
+npm install @kairos-connect/sdk
 ```
 
 ### Bun
 
 ```bash
-bun add @kairos/sdk
+bun add @kairos-connect/sdk
 ```
 
 ### pnpm
 
 ```bash
-pnpm add @kairos/sdk
+pnpm add @kairos-connect/sdk
 ```
 
 ### yarn
 
 ```bash
-yarn add @kairos/sdk
+yarn add @kairos-connect/sdk
 ```
 
 ## Quick Start
@@ -42,7 +42,7 @@ yarn add @kairos/sdk
 ### Setting up the client
 
 ```typescript
-import { Kairos } from '@kairos/sdk';
+import { Kairos } from '@kairos-connect/sdk';
 
 // Initialize with API key from environment or config
 const kairos = new Kairos({
@@ -56,7 +56,7 @@ const kairos = new Kairos();
 ### Creating your first task
 
 ```typescript
-import { Kairos } from '@kairos/sdk';
+import { Kairos } from '@kairos-connect/sdk';
 
 const kairos = new Kairos();
 
@@ -334,7 +334,7 @@ import {
   RateLimitError,
   ValidationError,
   InternalError,
-} from '@kairos/sdk';
+} from '@kairos-connect/sdk';
 
 const kairos = new Kairos();
 
@@ -408,7 +408,7 @@ export KAIROS_API_KEY=kairos_sk_your_api_key_here
 Then initialize without passing the API key:
 
 ```typescript
-import { Kairos } from '@kairos/sdk';
+import { Kairos } from '@kairos-connect/sdk';
 
 const kairos = new Kairos(); // Reads from KAIROS_API_KEY
 ```
@@ -474,7 +474,7 @@ import {
   PaginatedResponse,
   SingleResponse,
   MeResponse,
-} from '@kairos/sdk';
+} from '@kairos-connect/sdk';
 ```
 
 ## Browser Usage
@@ -483,7 +483,7 @@ The SDK works in modern browsers with support for `fetch`:
 
 ```html
 <script type="module">
-  import { Kairos } from 'https://cdn.example.com/@kairos/sdk/dist/index.js';
+  import { Kairos } from 'https://cdn.example.com/@kairos-connect/sdk/dist/index.js';
 
   const kairos = new Kairos({
     apiKey: 'kairos_sk_...',

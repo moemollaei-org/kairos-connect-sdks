@@ -5,7 +5,7 @@ Get started with the Kairos SDK in 5 minutes.
 ## Installation
 
 ```bash
-npm install @kairos/sdk
+npm install @kairos-connect/sdk
 ```
 
 ## Basic Usage
@@ -13,7 +13,7 @@ npm install @kairos/sdk
 ### Initialize the client
 
 ```typescript
-import { Kairos } from '@kairos/sdk';
+import { Kairos } from '@kairos-connect/sdk';
 
 // Using environment variable
 const kairos = new Kairos();
@@ -81,7 +81,7 @@ console.log(`Members: ${members.pagination.total}`);
 ## Error Handling
 
 ```typescript
-import { Kairos, AuthError, RateLimitError } from '@kairos/sdk';
+import { Kairos, AuthError, RateLimitError } from '@kairos-connect/sdk';
 
 const kairos = new Kairos();
 
@@ -117,7 +117,7 @@ const kairos = new Kairos(); // Automatically reads from .env
 Full TypeScript definitions are included:
 
 ```typescript
-import { Kairos, Task, Goal } from '@kairos/sdk';
+import { Kairos, Task, Goal } from '@kairos-connect/sdk';
 
 const kairos = new Kairos();
 
