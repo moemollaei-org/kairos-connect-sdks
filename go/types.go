@@ -1,6 +1,9 @@
 package kairos
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // ─── Task types ──────────────────────────────────────────────────────────────
 
@@ -152,40 +155,42 @@ type UpdateCommentInput struct {
 // ─── Document types ───────────────────────────────────────────────────────────
 
 // Document represents a Kairos document (Notion-like rich text page or database).
+// Content is RawMessage because the API may return either a Prosemirror JSON
+// object or a plain markdown string depending on the document type.
 type Document struct {
-	ID           string                 `json:"id"`
-	TeamID       string                 `json:"team_id"`
-	TeamspaceID  *string                `json:"teamspace_id"`
-	ParentID     *string                `json:"parent_id"`
-	Title        string                 `json:"title"`
-	Content      map[string]interface{} `json:"content"`
-	Type         string                 `json:"type"`
-	Icon         *string                `json:"icon"`
-	CoverImage   *string                `json:"cover_image"`
-	IsPublic     bool                   `json:"is_public"`
-	WordCount    int                    `json:"word_count"`
-	CreatedBy    string                 `json:"created_by"`
-	LastEditedBy *string                `json:"last_edited_by"`
-	CreatedAt    time.Time              `json:"created_at"`
-	UpdatedAt    time.Time              `json:"updated_at"`
+	ID           string          `json:"id"`
+	TeamID       string          `json:"team_id"`
+	TeamspaceID  *string         `json:"teamspace_id"`
+	ParentID     *string         `json:"parent_id"`
+	Title        string          `json:"title"`
+	Content      json.RawMessage `json:"content"`
+	Type         string          `json:"type"`
+	Icon         *string         `json:"icon"`
+	CoverImage   *string         `json:"cover_image"`
+	IsPublic     bool            `json:"is_public"`
+	WordCount    int             `json:"word_count"`
+	CreatedBy    string          `json:"created_by"`
+	LastEditedBy *string         `json:"last_edited_by"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
 }
 
 // CreateDocumentInput is input for creating a document.
 type CreateDocumentInput struct {
-	Title       string                 `json:"title"`
-	Content     map[string]interface{} `json:"content,omitempty"`
-	TeamspaceID *string                `json:"teamspace_id,omitempty"`
-	ParentID    *string                `json:"parent_id,omitempty"`
-	Type        *string                `json:"type,omitempty"`
-	Icon        *string                `json:"icon,omitempty"`
+	Title       string          `json:"title"`
+	Content     json.RawMessage `json:"content,omitempty"`
+	TeamspaceID *string         `json:"teamspace_id,omitempty"`
+	ParentID    *string         `json:"parent_id,omitempty"`
+	Type        *string         `json:"type,omitempty"`
+	Icon        *string         `json:"icon,omitempty"`
 }
 
 // UpdateDocumentInput is input for updating a document.
 type UpdateDocumentInput struct {
-	Title    *string                `json:"title,omitempty"`
-	Content  map[string]interface{} `json:"content,omitempty"`
-	Icon     *string                `json:"icon,omitempty"`
-	ParentID *string                `json:"parent_id,omitempty"`
+	Title    *string         `json:"title,omitempty"`
+	Content  json.RawMessage `json:"content,omitempty"`
+	Icon     *string         `json:"icon,omitempty"`
+	ParentID *string         `json:"parent_id,omitempty"`
 }
 
 // ─── Whiteboard types ─────────────────────────────────────────────────────────
