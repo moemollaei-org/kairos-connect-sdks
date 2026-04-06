@@ -338,7 +338,7 @@ func TestTasksAddComment(t *testing.T) {
 	defer server.Close()
 
 	client, _ := New("test-key", WithBaseURL(server.URL))
-	comment, err := client.Tasks.AddComment(context.Background(), "task-1", "Great work!")
+	comment, err := client.Tasks.AddComment(context.Background(), "task-1", CreateCommentInput{Content: "Great work!"})
 
 	if err != nil {
 		t.Fatalf("AddComment failed: %v", err)

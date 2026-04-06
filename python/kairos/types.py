@@ -1,7 +1,7 @@
 from __future__ import annotations
 """Pydantic models for Kairos API responses."""
 
-from typing import Any, Dict, Generic, List, Literal, Optional, TypeVar
+from typing import Any, Dict, Generic, List, Literal, Optional, TypeVar, Union
 
 from pydantic import BaseModel
 
@@ -141,7 +141,9 @@ class Document(BaseModel):
     teamspace_id: Optional[str] = None
     parent_id: Optional[str] = None
     title: str
-    content: Optional[Dict[str, Any]] = None
+    # content is Prosemirror JSON in production but may be a plain string in
+    # legacy / test fixtures — accept both to avoid validation failures.
+    content: Optional[Union[str, Dict[str, Any]]] = None
     type: Literal["document", "database", "page"] = "document"
     icon: Optional[str] = None
     cover_image: Optional[str] = None
