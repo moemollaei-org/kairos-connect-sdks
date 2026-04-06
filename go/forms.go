@@ -78,7 +78,7 @@ func (s *FormsService) Update(ctx context.Context, id string, input UpdateFormIn
 		Instance *Form `json:"instance"`
 	}
 
-	_, err := s.client.patch(ctx, formsBase+"/"+id, input, &resp)
+	_, err := s.client.put(ctx, formsBase+"/"+id, input, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func (s *FormsService) UpdateComment(ctx context.Context, commentID string, inpu
 		Comment *Comment `json:"comment"`
 	}
 
-	_, err := s.client.patch(ctx, "/comments/"+commentID, input, &resp)
+	_, err := s.client.put(ctx, "/comments/"+commentID, input, &resp)
 	if err != nil {
 		return nil, err
 	}

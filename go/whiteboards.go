@@ -73,7 +73,7 @@ func (s *WhiteboardsService) Update(ctx context.Context, id string, input Update
 		Whiteboard *Whiteboard `json:"whiteboard"`
 	}
 
-	_, err := s.client.patch(ctx, "/whiteboards/"+id, input, &resp)
+	_, err := s.client.put(ctx, "/whiteboards/"+id, input, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (s *WhiteboardsService) UpdateComment(ctx context.Context, commentID string
 		Comment *Comment `json:"comment"`
 	}
 
-	_, err := s.client.patch(ctx, "/comments/"+commentID, input, &resp)
+	_, err := s.client.put(ctx, "/comments/"+commentID, input, &resp)
 	if err != nil {
 		return nil, err
 	}

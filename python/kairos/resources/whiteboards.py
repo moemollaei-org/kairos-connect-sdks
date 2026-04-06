@@ -74,7 +74,7 @@ class WhiteboardsResource:
         if is_public is not None:
             data["is_public"] = is_public
 
-        response = await self._http.patch(f"/whiteboards/{whiteboard_id}", json_data=data)
+        response = await self._http.put(f"/whiteboards/{whiteboard_id}", json_data=data)
         return normalize_single(response, 'whiteboard', Whiteboard)
 
     async def delete(self, whiteboard_id: str) -> None:
@@ -103,7 +103,7 @@ class WhiteboardsResource:
 
     async def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment (requires write:comments scope)."""
-        response = await self._http.patch(
+        response = await self._http.put(
             f"/comments/{comment_id}", json_data={"content": content}
         )
         return normalize_single(response, 'comment', Comment)
@@ -179,7 +179,7 @@ class SyncWhiteboardsResource:
         if is_public is not None:
             data["is_public"] = is_public
 
-        response = self._http.patch(f"/whiteboards/{whiteboard_id}", json_data=data)
+        response = self._http.put(f"/whiteboards/{whiteboard_id}", json_data=data)
         return normalize_single(response, 'whiteboard', Whiteboard)
 
     def delete(self, whiteboard_id: str) -> None:
@@ -208,7 +208,7 @@ class SyncWhiteboardsResource:
 
     def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment."""
-        response = self._http.patch(
+        response = self._http.put(
             f"/comments/{comment_id}", json_data={"content": content}
         )
         return normalize_single(response, 'comment', Comment)

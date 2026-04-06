@@ -89,7 +89,7 @@ class DocumentsResource:
         if parent_id is not None:
             data["parent_id"] = parent_id
 
-        response = await self._http.patch(f"/documents/{document_id}", json_data=data)
+        response = await self._http.put(f"/documents/{document_id}", json_data=data)
         return normalize_single(response, 'document', Document)
 
     async def delete(self, document_id: str) -> None:
@@ -118,7 +118,7 @@ class DocumentsResource:
 
     async def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment (requires write:comments scope)."""
-        response = await self._http.patch(
+        response = await self._http.put(
             f"/comments/{comment_id}", json_data={"content": content}
         )
         return normalize_single(response, 'comment', Comment)
@@ -209,7 +209,7 @@ class SyncDocumentsResource:
         if parent_id is not None:
             data["parent_id"] = parent_id
 
-        response = self._http.patch(f"/documents/{document_id}", json_data=data)
+        response = self._http.put(f"/documents/{document_id}", json_data=data)
         return normalize_single(response, 'document', Document)
 
     def delete(self, document_id: str) -> None:
@@ -238,7 +238,7 @@ class SyncDocumentsResource:
 
     def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment."""
-        response = self._http.patch(
+        response = self._http.put(
             f"/comments/{comment_id}", json_data={"content": content}
         )
         return normalize_single(response, 'comment', Comment)

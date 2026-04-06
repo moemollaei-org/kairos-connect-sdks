@@ -7,12 +7,8 @@ import type {
   Comment,
   CreateCommentInput,
   UpdateCommentInput,
-  TaskAssignee,
-  AddTaskAssigneeInput,
   TaskLabel,
   AddTaskLabelInput,
-  TaskDependency,
-  AddTaskDependencyInput,
   ListTasksOptions,
   ListOptions,
   PaginatedResponse,
@@ -56,8 +52,8 @@ export class TasksResource {
   }
 
   async update(id: string, input: UpdateTaskInput): Promise<Task> {
-    // Worker returns: { task: {...} }
-    const raw = await this.http.patch<Record<string, unknown>>(`/tasks/${id}`, input);
+    // Worker uses PUT (full replacement), not PATCH
+    const raw = await this.http.put<Record<string, unknown>>(`/tasks/${id}`, input);
     return normalizeSingle<Task>(raw, 'task');
   }
 
@@ -65,85 +61,27 @@ export class TasksResource {
     await this.http.delete(`/tasks/${id}`);
   }
 
-  // ─── Assignees ───────────────────────────────────────────────────────
-
-  /** List all assignees for a task */
-  async listAssignees(taskId: string): Promise<TaskAssignee[]> {
-    const raw = await this.http.get<unknown>(`/tasks/${taskId}/assignees`);
-    return normalizeList<TaskAssignee>(raw, 'assignees');
-  }
-
-  /** Add a user as an assignee to a task */
-  async addAssignee(taskId: string, input: AddTaskAssigneeInput): Promise<TaskAssignee> {
-    const raw = await this.http.post<Record<string, unknown>>(`/tasks/${taskId}/assignees`, input);
-    return normalizeSingle<TaskAssignee>(raw, 'assignee');
-  }
-
-  /** Remove a user from a task's assignees */
-  async removeAssignee(taskId: string, userId: string): Promise<void> {
-    await this.http.delete(`/tasks/${taskId}/assignees/${userId}`);
-  }
-
   // ─── Labels ──────────────────────────────────────────────────────────
 
   /** List all labels on a task */
   async listLabels(taskId: string): Promise<TaskLabel[]> {
+    // Worker returns: { data: [...] }
     const raw = await this.http.get<unknown>(`/tasks/${taskId}/labels`);
     return normalizeList<TaskLabel>(raw, 'labels');
   }
 
-  /** Add a label to a task */
+  /** Add a label to a task (POST /tasks/:id/labels/:labelId) */
   async addLabel(taskId: string, input: AddTaskLabelInput): Promise<TaskLabel> {
-    const raw = await this.http.post<Record<string, unknown>>(`/tasks/${taskId}/labels`, input);
+    const raw = await this.http.post<Record<string, unknown>>(
+      `/tasks/${taskId}/labels/${input.label_id}`,
+      {},
+    );
     return normalizeSingle<TaskLabel>(raw, 'label');
   }
 
   /** Remove a label from a task */
   async removeLabel(taskId: string, labelId: string): Promise<void> {
     await this.http.delete(`/tasks/${taskId}/labels/${labelId}`);
-  }
-
-  // ─── Subtasks ─────────────────────────────────────────────────────────
-
-  /** List immediate subtasks of a task */
-  async listSubtasks(taskId: string, options?: ListOptions): Promise<PaginatedResponse<Task>> {
-    const params: Record<string, unknown> = {};
-    const limit = options?.limit ?? 20;
-    const offset = options?.offset ?? 0;
-    if (options) {
-      if (options.limit) params.limit = options.limit;
-      if (options.offset) params.offset = options.offset;
-    }
-    const raw = await this.http.get<Record<string, unknown>>(`/tasks/${taskId}/subtasks`, params);
-    return normalizePaginated<Task>(raw, 'tasks', limit, offset);
-  }
-
-  /** Create a subtask under a parent task */
-  async createSubtask(taskId: string, input: CreateTaskInput): Promise<Task> {
-    const raw = await this.http.post<Record<string, unknown>>(`/tasks/${taskId}/subtasks`, input);
-    return normalizeSingle<Task>(raw, 'task');
-  }
-
-  // ─── Dependencies ─────────────────────────────────────────────────────
-
-  /** List dependencies for a task */
-  async listDependencies(taskId: string): Promise<TaskDependency[]> {
-    const raw = await this.http.get<unknown>(`/tasks/${taskId}/dependencies`);
-    return normalizeList<TaskDependency>(raw, 'dependencies');
-  }
-
-  /** Add a dependency to a task */
-  async addDependency(taskId: string, input: AddTaskDependencyInput): Promise<TaskDependency> {
-    const raw = await this.http.post<Record<string, unknown>>(
-      `/tasks/${taskId}/dependencies`,
-      input,
-    );
-    return normalizeSingle<TaskDependency>(raw, 'dependency');
-  }
-
-  /** Remove a dependency from a task */
-  async removeDependency(taskId: string, dependencyId: string): Promise<void> {
-    await this.http.delete(`/tasks/${taskId}/dependencies/${dependencyId}`);
   }
 
   // ─── Comments ─────────────────────────────────────────────────────────
@@ -157,6 +95,7 @@ export class TasksResource {
       if (options.limit) params.limit = options.limit;
       if (options.offset) params.offset = options.offset;
     }
+    // Worker returns: { comments: [...], count, total, has_more }
     const raw = await this.http.get<Record<string, unknown>>(`/tasks/${taskId}/comments`, params);
     return normalizePaginated<Comment>(raw, 'comments', limit, offset);
   }
@@ -172,7 +111,7 @@ export class TasksResource {
 
   /** Update a comment (requires write:comments scope) */
   async updateComment(commentId: string, input: UpdateCommentInput): Promise<Comment> {
-    const raw = await this.http.patch<Record<string, unknown>>(
+    const raw = await this.http.put<Record<string, unknown>>(
       `/comments/${commentId}`,
       input,
     );

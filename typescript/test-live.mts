@@ -19,10 +19,6 @@ async function run() {
     const t = tasks.data[0];
     console.log('  first:', t.id, '|', t.title, '|', t.status);
 
-    console.log('\n=== tasks.listAssignees ===');
-    const assignees = await client.tasks.listAssignees(t.id);
-    console.log('✓ assignees:', assignees.length);
-
     console.log('\n=== tasks.listLabels ===');
     const labels = await client.tasks.listLabels(t.id);
     console.log('✓ labels:', labels.length);
@@ -30,14 +26,6 @@ async function run() {
     console.log('\n=== tasks.listComments ===');
     const tc = await client.tasks.listComments(t.id, { limit: 3 });
     console.log('✓ comments total:', tc.pagination.total);
-
-    console.log('\n=== tasks.listSubtasks ===');
-    const subs = await client.tasks.listSubtasks(t.id);
-    console.log('✓ subtasks:', subs.pagination.total);
-
-    console.log('\n=== tasks.listDependencies ===');
-    const deps = await client.tasks.listDependencies(t.id);
-    console.log('✓ dependencies:', deps.length);
   }
 
   console.log('\n=== goals.list ===');
@@ -92,9 +80,13 @@ async function run() {
 
   console.log('\n=== team.get ===');
   const team = await client.team.get();
-  console.log('✓ team:', team.name);
+  console.log('✓ team:', team.name, '| id:', team.id);
 
-  console.log('\n✅ All TypeScript SDK tests passed');
+  console.log('\n=== team.listMembers ===');
+  const members = await client.team.listMembers(team.id);
+  console.log('✓ members:', members.data.length);
+
+  console.log('\n✅ All TypeScript SDK live tests passed');
 }
 
-run().catch(e => { console.error('\n❌', e.message); process.exit(1); });
+run().catch(e => { console.error('\n❌', (e as Error).message); process.exit(1); });

@@ -124,7 +124,7 @@ async def test_goals_create():
 @respx.mock
 async def test_goals_update():
     """Test updating a goal."""
-    respx.patch("https://gateway.thekairos.app/v1/goals/goal_1").mock(
+    respx.put("https://gateway.thekairos.app/v1/goals/goal_1").mock(
         return_value=Response(
             200,
             json={
@@ -157,11 +157,11 @@ async def test_goals_update():
 @respx.mock
 async def test_goals_list_tasks():
     """Test listing tasks for a goal."""
-    respx.get("https://gateway.thekairos.app/v1/goals/goal_1/tasks").mock(
+    respx.get("https://gateway.thekairos.app/v1/tasks").mock(
         return_value=Response(
             200,
             json={
-                "data": [
+                "tasks": [
                     {
                         "id": "task_1",
                         "team_id": "team_1",
@@ -174,7 +174,7 @@ async def test_goals_list_tasks():
                         "updated_at": "2024-01-01T00:00:00Z",
                     }
                 ],
-                "pagination": {"page": 1, "limit": 20, "total": 1, "has_more": False},
+                "count": 1, "total": 1, "hasMore": False, "limit": 20, "offset": 0,
             },
         )
     )

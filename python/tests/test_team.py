@@ -5,29 +5,32 @@ from httpx import Response
 
 from kairos import Kairos, KairosSync
 
+TEAM_ID = "team_1"
 
 @respx.mock
 async def test_team_get():
     """Test getting team information."""
-    respx.get("https://gateway.thekairos.app/v1/team").mock(
+    respx.get("https://gateway.thekairos.app/v1/teams").mock(
         return_value=Response(
             200,
             json={
-                "data": {
-                    "id": "team_1",
-                    "name": "Engineering Team",
-                    "slug": "engineering-team",
-                    "description": "Main engineering team",
-                    "avatar_url": "https://example.com/avatar.png",
-                    "created_at": "2024-01-01T00:00:00Z",
-                }
+                "teams": [
+                    {
+                        "id": TEAM_ID,
+                        "name": "Engineering Team",
+                        "slug": "engineering-team",
+                        "description": "Main engineering team",
+                        "avatar_url": "https://example.com/avatar.png",
+                        "created_at": "2024-01-01T00:00:00Z",
+                    }
+                ]
             },
         )
     )
 
     async with Kairos(api_key="test_key") as client:
         team = await client.team.get()
-        assert team.id == "team_1"
+        assert team.id == TEAM_ID
         assert team.name == "Engineering Team"
         assert team.slug == "engineering-team"
 
@@ -35,11 +38,11 @@ async def test_team_get():
 @respx.mock
 async def test_team_list_members():
     """Test listing team members."""
-    respx.get("https://gateway.thekairos.app/v1/team/members").mock(
+    respx.get(f"https://gateway.thekairos.app/v1/teams/{TEAM_ID}/members").mock(
         return_value=Response(
             200,
             json={
-                "data": [
+                "members": [
                     {
                         "user_id": "user_1",
                         "email": "alice@example.com",
@@ -57,13 +60,12 @@ async def test_team_list_members():
                         "joined_at": "2024-01-05T00:00:00Z",
                     },
                 ],
-                "pagination": {"page": 1, "limit": 20, "total": 2, "has_more": False},
             },
         )
     )
 
     async with Kairos(api_key="test_key") as client:
-        result = await client.team.list_members()
+        result = await client.team.list_members(TEAM_ID)
         assert len(result.data) == 2
         assert result.data[0].name == "Alice"
         assert result.data[0].role == "admin"
@@ -74,35 +76,37 @@ async def test_team_list_members():
 @respx.mock
 def test_team_get_sync():
     """Test getting team information synchronously."""
-    respx.get("https://gateway.thekairos.app/v1/team").mock(
+    respx.get("https://gateway.thekairos.app/v1/teams").mock(
         return_value=Response(
             200,
             json={
-                "data": {
-                    "id": "team_1",
-                    "name": "Engineering Team",
-                    "slug": "engineering-team",
-                    "description": "Main engineering team",
-                    "created_at": "2024-01-01T00:00:00Z",
-                }
+                "teams": [
+                    {
+                        "id": TEAM_ID,
+                        "name": "Engineering Team",
+                        "slug": "engineering-team",
+                        "description": "Main engineering team",
+                        "created_at": "2024-01-01T00:00:00Z",
+                    }
+                ]
             },
         )
     )
 
     with KairosSync(api_key="test_key") as client:
         team = client.team.get()
-        assert team.id == "team_1"
+        assert team.id == TEAM_ID
         assert team.name == "Engineering Team"
 
 
 @respx.mock
 def test_team_list_members_sync():
     """Test listing team members synchronously."""
-    respx.get("https://gateway.thekairos.app/v1/team/members").mock(
+    respx.get(f"https://gateway.thekairos.app/v1/teams/{TEAM_ID}/members").mock(
         return_value=Response(
             200,
             json={
-                "data": [
+                "members": [
                     {
                         "user_id": "user_1",
                         "email": "alice@example.com",
@@ -111,12 +115,11 @@ def test_team_list_members_sync():
                         "joined_at": "2024-01-01T00:00:00Z",
                     }
                 ],
-                "pagination": {"page": 1, "limit": 20, "total": 1, "has_more": False},
             },
         )
     )
 
     with KairosSync(api_key="test_key") as client:
-        result = client.team.list_members()
+        result = client.team.list_members(TEAM_ID)
         assert len(result.data) == 1
         assert result.data[0].name == "Alice"

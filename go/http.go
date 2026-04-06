@@ -120,6 +120,11 @@ func (c *Client) post(ctx context.Context, path string, body interface{}, out in
 	return c.do(ctx, http.MethodPost, path, body, out)
 }
 
+// put executes a PUT request.
+func (c *Client) put(ctx context.Context, path string, body interface{}, out interface{}) (*RateLimit, error) {
+	return c.do(ctx, http.MethodPut, path, body, out)
+}
+
 // patch executes a PATCH request.
 func (c *Client) patch(ctx context.Context, path string, body interface{}, out interface{}) (*RateLimit, error) {
 	return c.do(ctx, http.MethodPatch, path, body, out)

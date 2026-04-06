@@ -1,11 +1,11 @@
 from __future__ import annotations
 """Tasks resource for Kairos SDK."""
 
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Optional
 
 from .._http import AsyncHttpClient, SyncHttpClient
 from .._normalize import normalize_paginated, normalize_single, normalize_list
-from ..types import Comment, PaginatedResponse, Task, TaskAssignee, TaskDependency, TaskLabel
+from ..types import Comment, PaginatedResponse, Task, TaskLabel
 
 
 # ─── Async ───────────────────────────────────────────────────────────────────
@@ -124,31 +124,12 @@ class TasksResource:
         if start_date is not None:
             data["start_date"] = start_date
 
-        response = await self._http.patch(f"/tasks/{task_id}", json_data=data)
+        response = await self._http.put(f"/tasks/{task_id}", json_data=data)
         return normalize_single(response, 'task', Task)
 
     async def delete(self, task_id: str) -> None:
         """Delete a task."""
         await self._http.delete(f"/tasks/{task_id}")
-
-    # Assignees ----------------------------------------------------------------
-
-    async def list_assignees(self, task_id: str) -> List[TaskAssignee]:
-        """List all assignees for a task (requires read:tasks scope)."""
-        response = await self._http.get(f"/tasks/{task_id}/assignees")
-        return normalize_list(response, 'assignees', TaskAssignee)
-
-    async def add_assignee(self, task_id: str, user_id: str) -> TaskAssignee:
-        """Add a user as assignee to a task (requires write:tasks scope)."""
-        response = await self._http.post(
-            f"/tasks/{task_id}/assignees",
-            json_data={"user_id": user_id},
-        )
-        return normalize_single(response, 'assignee', TaskAssignee)
-
-    async def remove_assignee(self, task_id: str, user_id: str) -> None:
-        """Remove an assignee from a task (requires write:tasks scope)."""
-        await self._http.delete(f"/tasks/{task_id}/assignees/{user_id}")
 
     # Labels -------------------------------------------------------------------
 
@@ -160,54 +141,13 @@ class TasksResource:
     async def add_label(self, task_id: str, label_id: str) -> TaskLabel:
         """Add a label to a task (requires write:tasks scope)."""
         response = await self._http.post(
-            f"/tasks/{task_id}/labels",
-            json_data={"label_id": label_id},
+            f"/tasks/{task_id}/labels/{label_id}",
         )
         return normalize_single(response, 'label', TaskLabel)
 
     async def remove_label(self, task_id: str, label_id: str) -> None:
         """Remove a label from a task (requires write:tasks scope)."""
         await self._http.delete(f"/tasks/{task_id}/labels/{label_id}")
-
-    # Subtasks -----------------------------------------------------------------
-
-    async def list_subtasks(
-        self, task_id: str, page: int = 1, limit: int = 20
-    ) -> PaginatedResponse[Task]:
-        """List immediate subtasks of a task (requires read:tasks scope)."""
-        params = {"page": page, "limit": limit}
-        response = await self._http.get(f"/tasks/{task_id}/subtasks", params=params)
-        return PaginatedResponse[Task](**normalize_paginated(response, 'tasks', Task, limit=limit, offset=(page - 1) * limit))
-
-    async def create_subtask(self, task_id: str, title: str, **kwargs: Any) -> Task:
-        """Create a subtask under a parent task (requires write:tasks scope)."""
-        data: Dict[str, Any] = {"title": title, **kwargs}
-        response = await self._http.post(f"/tasks/{task_id}/subtasks", json_data=data)
-        return normalize_single(response, 'task', Task)
-
-    # Dependencies -------------------------------------------------------------
-
-    async def list_dependencies(self, task_id: str) -> List[TaskDependency]:
-        """List dependencies for a task (requires read:tasks scope)."""
-        response = await self._http.get(f"/tasks/{task_id}/dependencies")
-        return normalize_list(response, 'dependencies', TaskDependency)
-
-    async def add_dependency(
-        self,
-        task_id: str,
-        depends_on_task_id: str,
-        dependency_type: Literal["blocks", "blocked_by", "relates_to", "duplicates"] = "blocks",
-    ) -> TaskDependency:
-        """Add a dependency to a task (requires write:tasks scope)."""
-        response = await self._http.post(
-            f"/tasks/{task_id}/dependencies",
-            json_data={"depends_on_task_id": depends_on_task_id, "dependency_type": dependency_type},
-        )
-        return normalize_single(response, 'dependency', TaskDependency)
-
-    async def remove_dependency(self, task_id: str, dependency_id: str) -> None:
-        """Remove a dependency from a task (requires write:tasks scope)."""
-        await self._http.delete(f"/tasks/{task_id}/dependencies/{dependency_id}")
 
     # Comments -----------------------------------------------------------------
 
@@ -231,7 +171,7 @@ class TasksResource:
 
     async def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment (requires write:comments scope)."""
-        response = await self._http.patch(
+        response = await self._http.put(
             f"/comments/{comment_id}", json_data={"content": content}
         )
         return normalize_single(response, 'comment', Comment)
@@ -357,30 +297,12 @@ class SyncTasksResource:
         if start_date is not None:
             data["start_date"] = start_date
 
-        response = self._http.patch(f"/tasks/{task_id}", json_data=data)
+        response = self._http.put(f"/tasks/{task_id}", json_data=data)
         return normalize_single(response, 'task', Task)
 
     def delete(self, task_id: str) -> None:
         """Delete a task."""
         self._http.delete(f"/tasks/{task_id}")
-
-    # Assignees ----------------------------------------------------------------
-
-    def list_assignees(self, task_id: str) -> List[TaskAssignee]:
-        """List all assignees for a task."""
-        response = self._http.get(f"/tasks/{task_id}/assignees")
-        return normalize_list(response, 'assignees', TaskAssignee)
-
-    def add_assignee(self, task_id: str, user_id: str) -> TaskAssignee:
-        """Add a user as assignee to a task."""
-        response = self._http.post(
-            f"/tasks/{task_id}/assignees", json_data={"user_id": user_id}
-        )
-        return normalize_single(response, 'assignee', TaskAssignee)
-
-    def remove_assignee(self, task_id: str, user_id: str) -> None:
-        """Remove an assignee from a task."""
-        self._http.delete(f"/tasks/{task_id}/assignees/{user_id}")
 
     # Labels -------------------------------------------------------------------
 
@@ -392,53 +314,13 @@ class SyncTasksResource:
     def add_label(self, task_id: str, label_id: str) -> TaskLabel:
         """Add a label to a task."""
         response = self._http.post(
-            f"/tasks/{task_id}/labels", json_data={"label_id": label_id}
+            f"/tasks/{task_id}/labels/{label_id}",
         )
         return normalize_single(response, 'label', TaskLabel)
 
     def remove_label(self, task_id: str, label_id: str) -> None:
         """Remove a label from a task."""
         self._http.delete(f"/tasks/{task_id}/labels/{label_id}")
-
-    # Subtasks -----------------------------------------------------------------
-
-    def list_subtasks(
-        self, task_id: str, page: int = 1, limit: int = 20
-    ) -> PaginatedResponse[Task]:
-        """List immediate subtasks of a task."""
-        params = {"page": page, "limit": limit}
-        response = self._http.get(f"/tasks/{task_id}/subtasks", params=params)
-        return PaginatedResponse[Task](**normalize_paginated(response, 'tasks', Task, limit=limit, offset=(page - 1) * limit))
-
-    def create_subtask(self, task_id: str, title: str, **kwargs: Any) -> Task:
-        """Create a subtask under a parent task."""
-        data: Dict[str, Any] = {"title": title, **kwargs}
-        response = self._http.post(f"/tasks/{task_id}/subtasks", json_data=data)
-        return normalize_single(response, 'task', Task)
-
-    # Dependencies -------------------------------------------------------------
-
-    def list_dependencies(self, task_id: str) -> List[TaskDependency]:
-        """List dependencies for a task."""
-        response = self._http.get(f"/tasks/{task_id}/dependencies")
-        return normalize_list(response, 'dependencies', TaskDependency)
-
-    def add_dependency(
-        self,
-        task_id: str,
-        depends_on_task_id: str,
-        dependency_type: Literal["blocks", "blocked_by", "relates_to", "duplicates"] = "blocks",
-    ) -> TaskDependency:
-        """Add a dependency to a task."""
-        response = self._http.post(
-            f"/tasks/{task_id}/dependencies",
-            json_data={"depends_on_task_id": depends_on_task_id, "dependency_type": dependency_type},
-        )
-        return normalize_single(response, 'dependency', TaskDependency)
-
-    def remove_dependency(self, task_id: str, dependency_id: str) -> None:
-        """Remove a dependency from a task."""
-        self._http.delete(f"/tasks/{task_id}/dependencies/{dependency_id}")
 
     # Comments -----------------------------------------------------------------
 
@@ -462,7 +344,7 @@ class SyncTasksResource:
 
     def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment."""
-        response = self._http.patch(
+        response = self._http.put(
             f"/comments/{comment_id}", json_data={"content": content}
         )
         return normalize_single(response, 'comment', Comment)

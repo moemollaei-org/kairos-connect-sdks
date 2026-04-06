@@ -76,6 +76,17 @@ class AsyncHttpClient:
         response = await self._request("POST", url, data=data, json=json_data)
         return response
 
+    async def put(
+        self,
+        endpoint: str,
+        data: Optional[Dict[str, Any]] = None,
+        json_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Make a PUT request."""
+        url = f"{self.base_url}{endpoint}"
+        response = await self._request("PUT", url, data=data, json=json_data)
+        return response
+
     async def patch(
         self,
         endpoint: str,
@@ -233,6 +244,16 @@ class SyncHttpClient:
         """Make a POST request."""
         url = f"{self.base_url}{endpoint}"
         return self._request("POST", url, data=data, json=json_data)
+
+    def put(
+        self,
+        endpoint: str,
+        data: Optional[Dict[str, Any]] = None,
+        json_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Make a PUT request."""
+        url = f"{self.base_url}{endpoint}"
+        return self._request("PUT", url, data=data, json=json_data)
 
     def patch(
         self,

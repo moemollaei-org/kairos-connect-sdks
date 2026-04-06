@@ -130,7 +130,7 @@ async def test_tasks_create():
 @respx.mock
 async def test_tasks_update():
     """Test updating a task."""
-    respx.patch("https://gateway.thekairos.app/v1/tasks/task_1").mock(
+    respx.put("https://gateway.thekairos.app/v1/tasks/task_1").mock(
         return_value=Response(
             200,
             json={

@@ -67,7 +67,7 @@ func (s *GoalsService) Update(ctx context.Context, id string, input UpdateGoalIn
 		Goal *Goal `json:"goal"`
 	}
 
-	_, err := s.client.patch(ctx, "/goals/"+id, input, &resp)
+	_, err := s.client.put(ctx, "/goals/"+id, input, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,9 @@ func (s *GoalsService) ListTasks(ctx context.Context, goalID string, opts *ListT
 		Offset  int    `json:"offset"`
 	}
 
-	_, err := s.client.get(ctx, "/goals/"+goalID+"/tasks", opts, &resp)
+	// Goals worker has no /:id/tasks sub-route — filter tasks by GoalID instead.
+	opts.GoalID = goalID
+	_, err := s.client.get(ctx, "/tasks", opts, &resp)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -145,7 +147,7 @@ func (s *GoalsService) UpdateComment(ctx context.Context, commentID string, inpu
 		Comment *Comment `json:"comment"`
 	}
 
-	_, err := s.client.patch(ctx, "/comments/"+commentID, input, &resp)
+	_, err := s.client.put(ctx, "/comments/"+commentID, input, &resp)
 	if err != nil {
 		return nil, err
 	}

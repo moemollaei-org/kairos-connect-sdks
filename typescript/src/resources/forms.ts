@@ -56,7 +56,7 @@ export class FormsResource {
 
   async update(id: string, input: UpdateFormInput): Promise<Form> {
     // Worker returns: { instance: {...} }
-    const raw = await this.http.patch<Record<string, unknown>>(`${this.BASE}/${id}`, input);
+    const raw = await this.http.put<Record<string, unknown>>(`${this.BASE}/${id}`, input);
     return normalizeSingle<Form>(raw, 'instance');
   }
 
@@ -126,7 +126,7 @@ export class FormsResource {
 
   /** Update a comment (requires write:comments scope) */
   async updateComment(commentId: string, input: UpdateCommentInput): Promise<Comment> {
-    const raw = await this.http.patch<Record<string, unknown>>(
+    const raw = await this.http.put<Record<string, unknown>>(
       `/comments/${commentId}`,
       input,
     );

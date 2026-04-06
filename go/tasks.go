@@ -61,14 +61,14 @@ func (s *TasksService) Create(ctx context.Context, input CreateTaskInput) (*Task
 	return resp.Task, nil
 }
 
-// Update updates a task.
+// Update updates a task. Workers use PUT (not PATCH).
 // Workers return: { task: {...} }
 func (s *TasksService) Update(ctx context.Context, id string, input UpdateTaskInput) (*Task, error) {
 	var resp struct {
 		Task *Task `json:"task"`
 	}
 
-	_, err := s.client.patch(ctx, "/tasks/"+id, input, &resp)
+	_, err := s.client.put(ctx, "/tasks/"+id, input, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -82,52 +82,13 @@ func (s *TasksService) Delete(ctx context.Context, id string) error {
 	return err
 }
 
-// ─── Assignees ───────────────────────────────────────────────────────────────
-
-// ListAssignees returns all assignees for a task.
-func (s *TasksService) ListAssignees(ctx context.Context, taskID string) ([]TaskAssignee, error) {
-	var resp struct {
-		Assignees []TaskAssignee `json:"assignees"`
-	}
-
-	_, err := s.client.get(ctx, "/tasks/"+taskID+"/assignees", nil, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Assignees, nil
-}
-
-// AddAssignee adds a user as an assignee to a task.
-func (s *TasksService) AddAssignee(ctx context.Context, taskID, userID string) (*TaskAssignee, error) {
-	input := struct {
-		UserID string `json:"user_id"`
-	}{UserID: userID}
-
-	var resp struct {
-		Assignee *TaskAssignee `json:"assignee"`
-	}
-
-	_, err := s.client.post(ctx, "/tasks/"+taskID+"/assignees", input, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Assignee, nil
-}
-
-// RemoveAssignee removes a user from a task's assignees.
-func (s *TasksService) RemoveAssignee(ctx context.Context, taskID, userID string) error {
-	_, err := s.client.delete(ctx, "/tasks/"+taskID+"/assignees/"+userID, nil)
-	return err
-}
-
 // ─── Labels ──────────────────────────────────────────────────────────────────
 
 // ListLabels returns all labels on a task.
+// Workers return: { data: [...] }
 func (s *TasksService) ListLabels(ctx context.Context, taskID string) ([]TaskLabel, error) {
 	var resp struct {
-		Labels []TaskLabel `json:"labels"`
+		Data []TaskLabel `json:"data"`
 	}
 
 	_, err := s.client.get(ctx, "/tasks/"+taskID+"/labels", nil, &resp)
@@ -135,25 +96,21 @@ func (s *TasksService) ListLabels(ctx context.Context, taskID string) ([]TaskLab
 		return nil, err
 	}
 
-	return resp.Labels, nil
+	return resp.Data, nil
 }
 
-// AddLabel adds a label to a task.
+// AddLabel adds a label to a task (POST /tasks/:id/labels/:labelId).
 func (s *TasksService) AddLabel(ctx context.Context, taskID, labelID string) (*TaskLabel, error) {
-	input := struct {
-		LabelID string `json:"label_id"`
-	}{LabelID: labelID}
-
 	var resp struct {
-		Label *TaskLabel `json:"label"`
+		Data *TaskLabel `json:"data"`
 	}
 
-	_, err := s.client.post(ctx, "/tasks/"+taskID+"/labels", input, &resp)
+	_, err := s.client.post(ctx, "/tasks/"+taskID+"/labels/"+labelID, struct{}{}, &resp)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp.Label, nil
+	return resp.Data, nil
 }
 
 // RemoveLabel removes a label from a task.
@@ -162,91 +119,10 @@ func (s *TasksService) RemoveLabel(ctx context.Context, taskID, labelID string) 
 	return err
 }
 
-// ─── Subtasks ─────────────────────────────────────────────────────────────────
-
-// ListSubtasks returns immediate subtasks of a task.
-func (s *TasksService) ListSubtasks(ctx context.Context, taskID string, opts *ListOptions) ([]Task, *Pagination, error) {
-	if opts == nil {
-		opts = &ListOptions{}
-	}
-
-	var resp struct {
-		Tasks   []Task `json:"tasks"`
-		Total   int    `json:"total"`
-		HasMore bool   `json:"hasMore"`
-		Limit   int    `json:"limit"`
-		Offset  int    `json:"offset"`
-	}
-
-	_, err := s.client.get(ctx, "/tasks/"+taskID+"/subtasks", opts, &resp)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return resp.Tasks, nativePagination(resp.Total, resp.Limit, resp.Offset, resp.HasMore), nil
-}
-
-// CreateSubtask creates a subtask under a parent task.
-func (s *TasksService) CreateSubtask(ctx context.Context, taskID string, input CreateTaskInput) (*Task, error) {
-	var resp struct {
-		Task *Task `json:"task"`
-	}
-
-	_, err := s.client.post(ctx, "/tasks/"+taskID+"/subtasks", input, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Task, nil
-}
-
-// ─── Dependencies ─────────────────────────────────────────────────────────────
-
-// ListDependencies returns all dependencies for a task.
-func (s *TasksService) ListDependencies(ctx context.Context, taskID string) ([]TaskDependency, error) {
-	var resp struct {
-		Dependencies []TaskDependency `json:"dependencies"`
-	}
-
-	_, err := s.client.get(ctx, "/tasks/"+taskID+"/dependencies", nil, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Dependencies, nil
-}
-
-// AddDependency adds a dependency to a task.
-func (s *TasksService) AddDependency(ctx context.Context, taskID, dependsOnTaskID, dependencyType string) (*TaskDependency, error) {
-	input := struct {
-		DependsOnTaskID string `json:"depends_on_task_id"`
-		DependencyType  string `json:"dependency_type"`
-	}{
-		DependsOnTaskID: dependsOnTaskID,
-		DependencyType:  dependencyType,
-	}
-
-	var resp struct {
-		Dependency *TaskDependency `json:"dependency"`
-	}
-
-	_, err := s.client.post(ctx, "/tasks/"+taskID+"/dependencies", input, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Dependency, nil
-}
-
-// RemoveDependency removes a dependency from a task.
-func (s *TasksService) RemoveDependency(ctx context.Context, taskID, dependencyID string) error {
-	_, err := s.client.delete(ctx, "/tasks/"+taskID+"/dependencies/"+dependencyID, nil)
-	return err
-}
-
 // ─── Comments ─────────────────────────────────────────────────────────────────
 
 // ListComments returns comments for a task.
+// Workers return: { comments: [...], count, total, has_more }
 func (s *TasksService) ListComments(ctx context.Context, taskID string, opts *ListOptions) ([]Comment, *Pagination, error) {
 	if opts == nil {
 		opts = &ListOptions{}
@@ -254,8 +130,8 @@ func (s *TasksService) ListComments(ctx context.Context, taskID string, opts *Li
 
 	var resp struct {
 		Comments []Comment `json:"comments"`
-		Total    int       `json:"total"`
-		HasMore  bool      `json:"hasMore"`
+		Total    interface{} `json:"total"`
+		HasMore  bool      `json:"has_more"`
 		Limit    int       `json:"limit"`
 		Offset   int       `json:"offset"`
 	}
@@ -265,7 +141,19 @@ func (s *TasksService) ListComments(ctx context.Context, taskID string, opts *Li
 		return nil, nil, err
 	}
 
-	return resp.Comments, nativePagination(resp.Total, resp.Limit, resp.Offset, resp.HasMore), nil
+	// total may be a string or int
+	total := 0
+	switch v := resp.Total.(type) {
+	case float64:
+		total = int(v)
+	case string:
+		// ignore parse errors
+	case nil:
+	default:
+		_ = v
+	}
+
+	return resp.Comments, nativePagination(total, resp.Limit, resp.Offset, resp.HasMore), nil
 }
 
 // AddComment adds a comment to a task.
@@ -282,13 +170,13 @@ func (s *TasksService) AddComment(ctx context.Context, taskID string, input Crea
 	return resp.Comment, nil
 }
 
-// UpdateComment updates a comment.
+// UpdateComment updates a comment. Workers use PUT.
 func (s *TasksService) UpdateComment(ctx context.Context, commentID string, input UpdateCommentInput) (*Comment, error) {
 	var resp struct {
 		Comment *Comment `json:"comment"`
 	}
 
-	_, err := s.client.patch(ctx, "/comments/"+commentID, input, &resp)
+	_, err := s.client.put(ctx, "/comments/"+commentID, input, &resp)
 	if err != nil {
 		return nil, err
 	}

@@ -7,35 +7,40 @@ type TeamService struct {
 	client *Client
 }
 
-// Get returns the current team.
+// Get returns the current API key's team.
+// Workers return { teams: [...] } — returns the first team.
 func (s *TeamService) Get(ctx context.Context) (*Team, error) {
 	var resp struct {
-		Data *Team `json:"data"`
+		Teams []Team `json:"teams"`
 	}
 
-	_, err := s.client.get(ctx, "/team", nil, &resp)
+	_, err := s.client.get(ctx, "/teams", nil, &resp)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp.Data, nil
+	if len(resp.Teams) == 0 {
+		return nil, &APIError{Code: "not_found", Message: "no team found for this API key", StatusCode: 404}
+	}
+
+	return &resp.Teams[0], nil
 }
 
-// ListMembers returns a paginated list of team members.
-func (s *TeamService) ListMembers(ctx context.Context, opts *ListOptions) ([]TeamMember, *Pagination, error) {
+// ListMembers returns the members of a team by ID.
+// Workers return { members: [...] }
+func (s *TeamService) ListMembers(ctx context.Context, teamID string, opts *ListOptions) ([]TeamMember, error) {
 	if opts == nil {
 		opts = &ListOptions{}
 	}
 
 	var resp struct {
-		Data       []TeamMember `json:"data"`
-		Pagination Pagination   `json:"pagination"`
+		Members []TeamMember `json:"members"`
 	}
 
-	_, err := s.client.get(ctx, "/team/members", opts, &resp)
+	_, err := s.client.get(ctx, "/teams/"+teamID+"/members", opts, &resp)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return resp.Data, &resp.Pagination, nil
+	return resp.Members, nil
 }

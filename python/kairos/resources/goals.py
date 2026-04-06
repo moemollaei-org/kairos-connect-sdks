@@ -88,7 +88,7 @@ class GoalsResource:
         if owner_id is not None:
             data["owner_id"] = owner_id
 
-        response = await self._http.patch(f"/goals/{goal_id}", json_data=data)
+        response = await self._http.put(f"/goals/{goal_id}", json_data=data)
         return normalize_single(response, 'goal', Goal)
 
     async def delete(self, goal_id: str) -> None:
@@ -101,8 +101,8 @@ class GoalsResource:
         self, goal_id: str, page: int = 1, limit: int = 20
     ) -> PaginatedResponse[Task]:
         """List tasks associated with a goal (requires read:tasks scope)."""
-        params = {"page": page, "limit": limit}
-        response = await self._http.get(f"/goals/{goal_id}/tasks", params=params)
+        params = {"goal_id": goal_id, "page": page, "limit": limit}
+        response = await self._http.get("/tasks", params=params)
         return PaginatedResponse[Task](**normalize_paginated(response, 'tasks', Task, limit=limit, offset=(page - 1) * limit))
 
     # Comments -----------------------------------------------------------------
@@ -111,7 +111,7 @@ class GoalsResource:
         self, goal_id: str, page: int = 1, limit: int = 20
     ) -> PaginatedResponse[Comment]:
         """List comments on a goal (requires read:comments scope)."""
-        params = {"page": page, "limit": limit}
+        params = {"goal_id": goal_id, "page": page, "limit": limit}
         response = await self._http.get(f"/goals/{goal_id}/comments", params=params)
         return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
 
@@ -127,7 +127,7 @@ class GoalsResource:
 
     async def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment (requires write:comments scope)."""
-        response = await self._http.patch(
+        response = await self._http.put(
             f"/comments/{comment_id}", json_data={"content": content}
         )
         return normalize_single(response, 'comment', Comment)
@@ -217,7 +217,7 @@ class SyncGoalsResource:
         if owner_id is not None:
             data["owner_id"] = owner_id
 
-        response = self._http.patch(f"/goals/{goal_id}", json_data=data)
+        response = self._http.put(f"/goals/{goal_id}", json_data=data)
         return normalize_single(response, 'goal', Goal)
 
     def delete(self, goal_id: str) -> None:
@@ -230,8 +230,8 @@ class SyncGoalsResource:
         self, goal_id: str, page: int = 1, limit: int = 20
     ) -> PaginatedResponse[Task]:
         """List tasks associated with a goal."""
-        params = {"page": page, "limit": limit}
-        response = self._http.get(f"/goals/{goal_id}/tasks", params=params)
+        params = {"goal_id": goal_id, "page": page, "limit": limit}
+        response = self._http.get("/tasks", params=params)
         return PaginatedResponse[Task](**normalize_paginated(response, 'tasks', Task, limit=limit, offset=(page - 1) * limit))
 
     # Comments -----------------------------------------------------------------
@@ -240,7 +240,7 @@ class SyncGoalsResource:
         self, goal_id: str, page: int = 1, limit: int = 20
     ) -> PaginatedResponse[Comment]:
         """List comments on a goal."""
-        params = {"page": page, "limit": limit}
+        params = {"goal_id": goal_id, "page": page, "limit": limit}
         response = self._http.get(f"/goals/{goal_id}/comments", params=params)
         return PaginatedResponse[Comment](**normalize_paginated(response, 'comments', Comment, limit=limit, offset=(page - 1) * limit))
 
@@ -256,7 +256,7 @@ class SyncGoalsResource:
 
     def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment."""
-        response = self._http.patch(
+        response = self._http.put(
             f"/comments/{comment_id}", json_data={"content": content}
         )
         return normalize_single(response, 'comment', Comment)

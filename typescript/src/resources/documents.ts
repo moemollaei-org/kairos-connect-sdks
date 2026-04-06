@@ -49,7 +49,7 @@ export class DocumentsResource {
 
   async update(id: string, input: UpdateDocumentInput): Promise<Document> {
     // Worker returns: { document: {...} }
-    const raw = await this.http.patch<Record<string, unknown>>(`/documents/${id}`, input);
+    const raw = await this.http.put<Record<string, unknown>>(`/documents/${id}`, input);
     return normalizeSingle<Document>(raw, 'document');
   }
 
@@ -89,7 +89,7 @@ export class DocumentsResource {
 
   /** Update a comment (requires write:comments scope) */
   async updateComment(commentId: string, input: UpdateCommentInput): Promise<Comment> {
-    const raw = await this.http.patch<Record<string, unknown>>(
+    const raw = await this.http.put<Record<string, unknown>>(
       `/comments/${commentId}`,
       input,
     );

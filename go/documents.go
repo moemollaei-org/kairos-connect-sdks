@@ -73,7 +73,7 @@ func (s *DocumentsService) Update(ctx context.Context, id string, input UpdateDo
 		Document *Document `json:"document"`
 	}
 
-	_, err := s.client.patch(ctx, "/documents/"+id, input, &resp)
+	_, err := s.client.put(ctx, "/documents/"+id, input, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (s *DocumentsService) UpdateComment(ctx context.Context, commentID string, 
 		Comment *Comment `json:"comment"`
 	}
 
-	_, err := s.client.patch(ctx, "/comments/"+commentID, input, &resp)
+	_, err := s.client.put(ctx, "/comments/"+commentID, input, &resp)
 	if err != nil {
 		return nil, err
 	}

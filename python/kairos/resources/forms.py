@@ -80,7 +80,7 @@ class FormsResource:
         if is_active is not None:
             data["is_active"] = is_active
 
-        response = await self._http.patch(f"/forms/instances/{form_id}", json_data=data)
+        response = await self._http.put(f"/forms/instances/{form_id}", json_data=data)
         return normalize_single(response, 'instance', Form)
 
     async def delete(self, form_id: str) -> None:
@@ -131,7 +131,7 @@ class FormsResource:
 
     async def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment (requires write:comments scope)."""
-        response = await self._http.patch(
+        response = await self._http.put(
             f"/comments/{comment_id}", json_data={"content": content}
         )
         return normalize_single(response, 'comment', Comment)
@@ -213,7 +213,7 @@ class SyncFormsResource:
         if is_active is not None:
             data["is_active"] = is_active
 
-        response = self._http.patch(f"/forms/instances/{form_id}", json_data=data)
+        response = self._http.put(f"/forms/instances/{form_id}", json_data=data)
         return normalize_single(response, 'instance', Form)
 
     def delete(self, form_id: str) -> None:
@@ -264,7 +264,7 @@ class SyncFormsResource:
 
     def update_comment(self, comment_id: str, content: str) -> Comment:
         """Update a comment."""
-        response = self._http.patch(
+        response = self._http.put(
             f"/comments/{comment_id}", json_data={"content": content}
         )
         return normalize_single(response, 'comment', Comment)

@@ -46,7 +46,7 @@ export class WhiteboardsResource {
 
   async update(id: string, input: UpdateWhiteboardInput): Promise<Whiteboard> {
     // Worker returns: { whiteboard: {...} }
-    const raw = await this.http.patch<Record<string, unknown>>(`/whiteboards/${id}`, input);
+    const raw = await this.http.put<Record<string, unknown>>(`/whiteboards/${id}`, input);
     return normalizeSingle<Whiteboard>(raw, 'whiteboard');
   }
 
@@ -86,7 +86,7 @@ export class WhiteboardsResource {
 
   /** Update a comment (requires write:comments scope) */
   async updateComment(commentId: string, input: UpdateCommentInput): Promise<Comment> {
-    const raw = await this.http.patch<Record<string, unknown>>(
+    const raw = await this.http.put<Record<string, unknown>>(
       `/comments/${commentId}`,
       input,
     );

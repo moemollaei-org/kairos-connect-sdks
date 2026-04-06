@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from .._http import AsyncHttpClient, SyncHttpClient
+from .._normalize import normalize_list, normalize_single
 from ..types import PaginatedResponse, Team, TeamMember
 
 
@@ -14,38 +15,39 @@ class TeamResource:
         self._http = http_client
 
     async def get(self) -> Team:
-        """Get current team information.
+        """Get the current API key's team.
 
-        Returns:
-            Team object
+        Worker returns { teams: [...] } — returns the first team.
         """
-        response = await self._http.get("/team")
-        return Team(**response["data"])
+        response = await self._http.get("/teams")
+        teams = normalize_list(response, "teams", Team)
+        if not teams:
+            raise ValueError("No team found for this API key")
+        return teams[0]
 
     async def list_members(
         self,
-        page: int = 1,
-        limit: int = 20,
-        role: Optional[str] = None,
+        team_id: str,
+        limit: int = 50,
+        offset: int = 0,
     ) -> PaginatedResponse[TeamMember]:
-        """List team members.
+        """List members of a team.
 
         Args:
-            page: Page number (1-indexed)
+            team_id: Team UUID
             limit: Items per page
-            role: Filter by role
+            offset: Pagination offset
 
         Returns:
             Paginated list of team members
         """
-        params: Dict[str, Any] = {"page": page, "limit": limit}
-        if role:
-            params["role"] = role
-
-        response = await self._http.get("/team/members", params=params)
+        params: Dict[str, Any] = {"limit": limit, "offset": offset}
+        # Worker returns { members: [...] }
+        response = await self._http.get(f"/teams/{team_id}/members", params=params)
+        members = normalize_list(response, "members", TeamMember)
         return PaginatedResponse[TeamMember](
-            data=[TeamMember(**member) for member in response["data"]],
-            pagination=response["pagination"],
+            data=members,
+            pagination={"page": 1, "limit": limit, "total": len(members), "has_more": False},
         )
 
 
@@ -56,36 +58,36 @@ class SyncTeamResource:
         self._http = http_client
 
     def get(self) -> Team:
-        """Get current team information.
+        """Get the current API key's team.
 
-        Returns:
-            Team object
+        Worker returns { teams: [...] } — returns the first team.
         """
-        response = self._http.get("/team")
-        return Team(**response["data"])
+        response = self._http.get("/teams")
+        teams = normalize_list(response, "teams", Team)
+        if not teams:
+            raise ValueError("No team found for this API key")
+        return teams[0]
 
     def list_members(
         self,
-        page: int = 1,
-        limit: int = 20,
-        role: Optional[str] = None,
+        team_id: str,
+        limit: int = 50,
+        offset: int = 0,
     ) -> PaginatedResponse[TeamMember]:
-        """List team members.
+        """List members of a team.
 
         Args:
-            page: Page number (1-indexed)
+            team_id: Team UUID
             limit: Items per page
-            role: Filter by role
+            offset: Pagination offset
 
         Returns:
             Paginated list of team members
         """
-        params: Dict[str, Any] = {"page": page, "limit": limit}
-        if role:
-            params["role"] = role
-
-        response = self._http.get("/team/members", params=params)
+        params: Dict[str, Any] = {"limit": limit, "offset": offset}
+        response = self._http.get(f"/teams/{team_id}/members", params=params)
+        members = normalize_list(response, "members", TeamMember)
         return PaginatedResponse[TeamMember](
-            data=[TeamMember(**member) for member in response["data"]],
-            pagination=response["pagination"],
+            data=members,
+            pagination={"page": 1, "limit": limit, "total": len(members), "has_more": False},
         )

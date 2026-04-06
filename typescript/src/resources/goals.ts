@@ -47,7 +47,7 @@ export class GoalsResource {
 
   async update(id: string, input: UpdateGoalInput): Promise<Goal> {
     // Worker returns: { goal: {...} }
-    const raw = await this.http.patch<Record<string, unknown>>(`/goals/${id}`, input);
+    const raw = await this.http.put<Record<string, unknown>>(`/goals/${id}`, input);
     return normalizeSingle<Goal>(raw, 'goal');
   }
 
@@ -70,7 +70,9 @@ export class GoalsResource {
       if (options.offset) params.offset = options.offset;
       if (options.search) params.search = options.search;
     }
-    const raw = await this.http.get<Record<string, unknown>>(`/goals/${goalId}/tasks`, params);
+    // Goals worker has no /:id/tasks sub-route — use GET /tasks?goal_id= instead.
+    params.goal_id = goalId;
+    const raw = await this.http.get<Record<string, unknown>>('/tasks', params);
     return normalizePaginated<Task>(raw, 'tasks', limit, offset);
   }
 
@@ -100,7 +102,7 @@ export class GoalsResource {
 
   /** Update a comment (requires write:comments scope) */
   async updateComment(commentId: string, input: UpdateCommentInput): Promise<Comment> {
-    const raw = await this.http.patch<Record<string, unknown>>(
+    const raw = await this.http.put<Record<string, unknown>>(
       `/comments/${commentId}`,
       input,
     );
