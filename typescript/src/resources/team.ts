@@ -23,7 +23,6 @@ export class TeamResource {
   async listMembers(teamId: string, options?: ListOptions): Promise<PaginatedResponse<TeamMember>> {
     const params: Record<string, unknown> = {};
     const limit = options?.limit ?? 50;
-    const offset = options?.offset ?? 0;
     if (options?.limit) params.limit = options.limit;
     if (options?.offset) params.offset = options.offset;
 

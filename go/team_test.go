@@ -15,11 +15,13 @@ func TestTeamGet(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": map[string]interface{}{
-				"id":         "team-1",
-				"name":       "Acme Corp",
-				"created_at": time.Now().UTC().Format(time.RFC3339),
-				"updated_at": time.Now().UTC().Format(time.RFC3339),
+			"teams": []map[string]interface{}{
+				{
+					"id":         "team-1",
+					"name":       "Acme Corp",
+					"created_at": time.Now().UTC().Format(time.RFC3339),
+					"updated_at": time.Now().UTC().Format(time.RFC3339),
+				},
 			},
 		}
 		json.NewEncoder(w).Encode(response)
@@ -48,7 +50,7 @@ func TestTeamListMembers(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
-			"data": []map[string]interface{}{
+			"members": []map[string]interface{}{
 				{
 					"id":         "member-1",
 					"team_id":    "team-1",
@@ -68,19 +70,13 @@ func TestTeamListMembers(t *testing.T) {
 					"updated_at": time.Now().UTC().Format(time.RFC3339),
 				},
 			},
-			"pagination": map[string]interface{}{
-				"page":     1,
-				"limit":    10,
-				"total":    2,
-				"has_more": false,
-			},
 		}
 		json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
 	client, _ := New("test-key", WithBaseURL(server.URL))
-	members, pagination, err := client.Team.ListMembers(context.Background(), nil)
+	members, err := client.Team.ListMembers(context.Background(), "team-1", nil)
 
 	if err != nil {
 		t.Fatalf("ListMembers failed: %v", err)
@@ -96,9 +92,5 @@ func TestTeamListMembers(t *testing.T) {
 
 	if members[1].Role != "member" {
 		t.Errorf("Expected role 'member', got '%s'", members[1].Role)
-	}
-
-	if pagination.Total != 2 {
-		t.Errorf("Expected total 2, got %d", pagination.Total)
 	}
 }
