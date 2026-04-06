@@ -3,6 +3,8 @@ import { TasksResource } from './resources/tasks';
 import { GoalsResource } from './resources/goals';
 import { TeamResource } from './resources/team';
 import { DocumentsResource } from './resources/documents';
+import { WhiteboardsResource } from './resources/whiteboards';
+import { FormsResource } from './resources/forms';
 import type { KairosConfig, MeResponse, SingleResponse } from './types';
 
 export class Kairos {
@@ -10,6 +12,8 @@ export class Kairos {
   public readonly goals: GoalsResource;
   public readonly team: TeamResource;
   public readonly documents: DocumentsResource;
+  public readonly whiteboards: WhiteboardsResource;
+  public readonly forms: FormsResource;
 
   private http: HttpClient;
 
@@ -36,6 +40,8 @@ export class Kairos {
     this.goals = new GoalsResource(this.http);
     this.team = new TeamResource(this.http);
     this.documents = new DocumentsResource(this.http);
+    this.whiteboards = new WhiteboardsResource(this.http);
+    this.forms = new FormsResource(this.http);
   }
 
   async me(): Promise<MeResponse> {

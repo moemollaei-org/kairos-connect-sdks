@@ -6,9 +6,11 @@ from typing import Optional
 
 from ._http import AsyncHttpClient, SyncHttpClient
 from .resources.documents import DocumentsResource, SyncDocumentsResource
+from .resources.forms import FormsResource, SyncFormsResource
 from .resources.goals import GoalsResource, SyncGoalsResource
 from .resources.tasks import SyncTasksResource, TasksResource
 from .resources.team import SyncTeamResource, TeamResource
+from .resources.whiteboards import SyncWhiteboardsResource, WhiteboardsResource
 from .types import MeResponse
 
 BASE_URL = "https://gateway.thekairos.app/v1"
@@ -21,6 +23,7 @@ class Kairos:
         async with Kairos() as kairos:
             tasks = await kairos.tasks.list()
             task = await kairos.tasks.get("task_123")
+            assignees = await kairos.tasks.list_assignees("task_123")
     """
 
     def __init__(
@@ -49,11 +52,12 @@ class Kairos:
 
         self._http = AsyncHttpClient(self._api_key, base_url, timeout, max_retries)
 
-        # Initialize resources
         self.tasks = TasksResource(self._http)
         self.goals = GoalsResource(self._http)
         self.team = TeamResource(self._http)
         self.documents = DocumentsResource(self._http)
+        self.whiteboards = WhiteboardsResource(self._http)
+        self.forms = FormsResource(self._http)
 
     async def me(self) -> MeResponse:
         """Get current authenticated user/token information.
@@ -114,11 +118,12 @@ class KairosSync:
 
         self._http = SyncHttpClient(self._api_key, base_url, timeout, max_retries)
 
-        # Initialize resources
         self.tasks = SyncTasksResource(self._http)
         self.goals = SyncGoalsResource(self._http)
         self.team = SyncTeamResource(self._http)
         self.documents = SyncDocumentsResource(self._http)
+        self.whiteboards = SyncWhiteboardsResource(self._http)
+        self.forms = SyncFormsResource(self._http)
 
     def me(self) -> MeResponse:
         """Get current authenticated user/token information.

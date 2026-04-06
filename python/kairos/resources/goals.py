@@ -4,7 +4,10 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from .._http import AsyncHttpClient, SyncHttpClient
-from ..types import Goal, PaginatedResponse, Task
+from ..types import Comment, Goal, PaginatedResponse, Task
+
+
+# ─── Async ───────────────────────────────────────────────────────────────────
 
 
 class GoalsResource:
@@ -13,44 +16,27 @@ class GoalsResource:
     def __init__(self, http_client: AsyncHttpClient):
         self._http = http_client
 
+    # Core CRUD ----------------------------------------------------------------
+
     async def list(
         self,
         page: int = 1,
         limit: int = 20,
         status: Optional[str] = None,
     ) -> PaginatedResponse[Goal]:
-        """List goals with optional filtering.
-
-        Args:
-            page: Page number (1-indexed)
-            limit: Items per page
-            status: Filter by status (active, completed, archived)
-
-        Returns:
-            Paginated list of goals
-        """
+        """List goals with optional filtering."""
         params: Dict[str, Any] = {"page": page, "limit": limit}
         if status:
             params["status"] = status
 
         response = await self._http.get("/goals", params=params)
         return PaginatedResponse[Goal](
-            data=[Goal(**goal) for goal in response["data"]],
+            data=[Goal(**g) for g in response["data"]],
             pagination=response["pagination"],
         )
 
     async def get(self, goal_id: str) -> Goal:
-        """Get a single goal.
-
-        Args:
-            goal_id: The goal ID
-
-        Returns:
-            Goal object
-
-        Raises:
-            NotFoundError: If goal doesn't exist
-        """
+        """Get a single goal by ID."""
         response = await self._http.get(f"/goals/{goal_id}")
         return Goal(**response["data"])
 
@@ -58,28 +44,20 @@ class GoalsResource:
         self,
         title: str,
         description: Optional[str] = None,
-        status: str = "active",
         due_date: Optional[str] = None,
+        start_date: Optional[str] = None,
+        owner_id: Optional[str] = None,
     ) -> Goal:
-        """Create a new goal.
-
-        Args:
-            title: Goal title
-            description: Goal description
-            status: Goal status (active, completed, archived)
-            due_date: Due date (ISO 8601)
-
-        Returns:
-            Created goal
-        """
-        data = {
-            "title": title,
-            "status": status,
-        }
+        """Create a new goal."""
+        data: Dict[str, Any] = {"title": title}
         if description:
             data["description"] = description
         if due_date:
             data["due_date"] = due_date
+        if start_date:
+            data["start_date"] = start_date
+        if owner_id:
+            data["owner_id"] = owner_id
 
         response = await self._http.post("/goals", json_data=data)
         return Goal(**response["data"])
@@ -92,23 +70,10 @@ class GoalsResource:
         status: Optional[str] = None,
         progress: Optional[float] = None,
         due_date: Optional[str] = None,
+        start_date: Optional[str] = None,
+        owner_id: Optional[str] = None,
     ) -> Goal:
-        """Update a goal.
-
-        Args:
-            goal_id: The goal ID
-            title: New title
-            description: New description
-            status: New status
-            progress: New progress (0.0-1.0)
-            due_date: New due date
-
-        Returns:
-            Updated goal
-
-        Raises:
-            NotFoundError: If goal doesn't exist
-        """
+        """Update a goal."""
         data: Dict[str, Any] = {}
         if title is not None:
             data["title"] = title
@@ -120,35 +85,67 @@ class GoalsResource:
             data["progress"] = progress
         if due_date is not None:
             data["due_date"] = due_date
+        if start_date is not None:
+            data["start_date"] = start_date
+        if owner_id is not None:
+            data["owner_id"] = owner_id
 
         response = await self._http.patch(f"/goals/{goal_id}", json_data=data)
         return Goal(**response["data"])
 
+    async def delete(self, goal_id: str) -> None:
+        """Delete a goal (requires write:goals scope)."""
+        await self._http.delete(f"/goals/{goal_id}")
+
+    # Tasks --------------------------------------------------------------------
+
     async def list_tasks(
-        self,
-        goal_id: str,
-        page: int = 1,
-        limit: int = 20,
+        self, goal_id: str, page: int = 1, limit: int = 20
     ) -> PaginatedResponse[Task]:
-        """List tasks for a goal.
-
-        Args:
-            goal_id: The goal ID
-            page: Page number (1-indexed)
-            limit: Items per page
-
-        Returns:
-            Paginated list of tasks
-
-        Raises:
-            NotFoundError: If goal doesn't exist
-        """
+        """List tasks associated with a goal (requires read:tasks scope)."""
         params = {"page": page, "limit": limit}
         response = await self._http.get(f"/goals/{goal_id}/tasks", params=params)
         return PaginatedResponse[Task](
-            data=[Task(**task) for task in response["data"]],
+            data=[Task(**t) for t in response["data"]],
             pagination=response["pagination"],
         )
+
+    # Comments -----------------------------------------------------------------
+
+    async def list_comments(
+        self, goal_id: str, page: int = 1, limit: int = 20
+    ) -> PaginatedResponse[Comment]:
+        """List comments on a goal (requires read:comments scope)."""
+        params = {"page": page, "limit": limit}
+        response = await self._http.get(f"/goals/{goal_id}/comments", params=params)
+        return PaginatedResponse[Comment](
+            data=[Comment(**c) for c in response["data"]],
+            pagination=response["pagination"],
+        )
+
+    async def add_comment(
+        self, goal_id: str, content: str, parent_comment_id: Optional[str] = None
+    ) -> Comment:
+        """Add a comment to a goal (requires write:comments scope)."""
+        data: Dict[str, Any] = {"content": content}
+        if parent_comment_id:
+            data["parent_comment_id"] = parent_comment_id
+        response = await self._http.post(f"/goals/{goal_id}/comments", json_data=data)
+        return Comment(**response["data"])
+
+    async def update_comment(self, comment_id: str, content: str) -> Comment:
+        """Update a comment (requires write:comments scope)."""
+        response = await self._http.patch(
+            f"/comments/{comment_id}", json_data={"content": content}
+        )
+        return Comment(**response["data"])
+
+    async def delete_comment(self, comment_id: str) -> None:
+        """Delete a comment (requires write:comments scope)."""
+        await self._http.delete(f"/comments/{comment_id}")
+
+
+# ─── Sync ────────────────────────────────────────────────────────────────────
 
 
 class SyncGoalsResource:
@@ -157,44 +154,27 @@ class SyncGoalsResource:
     def __init__(self, http_client: SyncHttpClient):
         self._http = http_client
 
+    # Core CRUD ----------------------------------------------------------------
+
     def list(
         self,
         page: int = 1,
         limit: int = 20,
         status: Optional[str] = None,
     ) -> PaginatedResponse[Goal]:
-        """List goals with optional filtering.
-
-        Args:
-            page: Page number (1-indexed)
-            limit: Items per page
-            status: Filter by status (active, completed, archived)
-
-        Returns:
-            Paginated list of goals
-        """
+        """List goals with optional filtering."""
         params: Dict[str, Any] = {"page": page, "limit": limit}
         if status:
             params["status"] = status
 
         response = self._http.get("/goals", params=params)
         return PaginatedResponse[Goal](
-            data=[Goal(**goal) for goal in response["data"]],
+            data=[Goal(**g) for g in response["data"]],
             pagination=response["pagination"],
         )
 
     def get(self, goal_id: str) -> Goal:
-        """Get a single goal.
-
-        Args:
-            goal_id: The goal ID
-
-        Returns:
-            Goal object
-
-        Raises:
-            NotFoundError: If goal doesn't exist
-        """
+        """Get a single goal by ID."""
         response = self._http.get(f"/goals/{goal_id}")
         return Goal(**response["data"])
 
@@ -202,28 +182,20 @@ class SyncGoalsResource:
         self,
         title: str,
         description: Optional[str] = None,
-        status: str = "active",
         due_date: Optional[str] = None,
+        start_date: Optional[str] = None,
+        owner_id: Optional[str] = None,
     ) -> Goal:
-        """Create a new goal.
-
-        Args:
-            title: Goal title
-            description: Goal description
-            status: Goal status (active, completed, archived)
-            due_date: Due date (ISO 8601)
-
-        Returns:
-            Created goal
-        """
-        data = {
-            "title": title,
-            "status": status,
-        }
+        """Create a new goal."""
+        data: Dict[str, Any] = {"title": title}
         if description:
             data["description"] = description
         if due_date:
             data["due_date"] = due_date
+        if start_date:
+            data["start_date"] = start_date
+        if owner_id:
+            data["owner_id"] = owner_id
 
         response = self._http.post("/goals", json_data=data)
         return Goal(**response["data"])
@@ -236,23 +208,10 @@ class SyncGoalsResource:
         status: Optional[str] = None,
         progress: Optional[float] = None,
         due_date: Optional[str] = None,
+        start_date: Optional[str] = None,
+        owner_id: Optional[str] = None,
     ) -> Goal:
-        """Update a goal.
-
-        Args:
-            goal_id: The goal ID
-            title: New title
-            description: New description
-            status: New status
-            progress: New progress (0.0-1.0)
-            due_date: New due date
-
-        Returns:
-            Updated goal
-
-        Raises:
-            NotFoundError: If goal doesn't exist
-        """
+        """Update a goal."""
         data: Dict[str, Any] = {}
         if title is not None:
             data["title"] = title
@@ -264,32 +223,61 @@ class SyncGoalsResource:
             data["progress"] = progress
         if due_date is not None:
             data["due_date"] = due_date
+        if start_date is not None:
+            data["start_date"] = start_date
+        if owner_id is not None:
+            data["owner_id"] = owner_id
 
         response = self._http.patch(f"/goals/{goal_id}", json_data=data)
         return Goal(**response["data"])
 
+    def delete(self, goal_id: str) -> None:
+        """Delete a goal."""
+        self._http.delete(f"/goals/{goal_id}")
+
+    # Tasks --------------------------------------------------------------------
+
     def list_tasks(
-        self,
-        goal_id: str,
-        page: int = 1,
-        limit: int = 20,
+        self, goal_id: str, page: int = 1, limit: int = 20
     ) -> PaginatedResponse[Task]:
-        """List tasks for a goal.
-
-        Args:
-            goal_id: The goal ID
-            page: Page number (1-indexed)
-            limit: Items per page
-
-        Returns:
-            Paginated list of tasks
-
-        Raises:
-            NotFoundError: If goal doesn't exist
-        """
+        """List tasks associated with a goal."""
         params = {"page": page, "limit": limit}
         response = self._http.get(f"/goals/{goal_id}/tasks", params=params)
         return PaginatedResponse[Task](
-            data=[Task(**task) for task in response["data"]],
+            data=[Task(**t) for t in response["data"]],
             pagination=response["pagination"],
         )
+
+    # Comments -----------------------------------------------------------------
+
+    def list_comments(
+        self, goal_id: str, page: int = 1, limit: int = 20
+    ) -> PaginatedResponse[Comment]:
+        """List comments on a goal."""
+        params = {"page": page, "limit": limit}
+        response = self._http.get(f"/goals/{goal_id}/comments", params=params)
+        return PaginatedResponse[Comment](
+            data=[Comment(**c) for c in response["data"]],
+            pagination=response["pagination"],
+        )
+
+    def add_comment(
+        self, goal_id: str, content: str, parent_comment_id: Optional[str] = None
+    ) -> Comment:
+        """Add a comment to a goal."""
+        data: Dict[str, Any] = {"content": content}
+        if parent_comment_id:
+            data["parent_comment_id"] = parent_comment_id
+        response = self._http.post(f"/goals/{goal_id}/comments", json_data=data)
+        return Comment(**response["data"])
+
+    def update_comment(self, comment_id: str, content: str) -> Comment:
+        """Update a comment."""
+        response = self._http.patch(
+            f"/comments/{comment_id}", json_data={"content": content}
+        )
+        return Comment(**response["data"])
+
+    def delete_comment(self, comment_id: str) -> None:
+        """Delete a comment."""
+        self._http.delete(f"/comments/{comment_id}")

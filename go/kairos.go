@@ -17,10 +17,12 @@ type Client struct {
 	baseURL    string
 	httpClient *http.Client
 	maxRetries int
-	Tasks      *TasksService
-	Goals      *GoalsService
-	Team       *TeamService
-	Documents  *DocumentsService
+	Tasks       *TasksService
+	Goals       *GoalsService
+	Team        *TeamService
+	Documents   *DocumentsService
+	Whiteboards *WhiteboardsService
+	Forms       *FormsService
 }
 
 // ClientOption is a function that configures the client.
@@ -79,6 +81,8 @@ func New(apiKey string, opts ...ClientOption) (*Client, error) {
 	c.Goals = &GoalsService{client: c}
 	c.Team = &TeamService{client: c}
 	c.Documents = &DocumentsService{client: c}
+	c.Whiteboards = &WhiteboardsService{client: c}
+	c.Forms = &FormsService{client: c}
 
 	return c, nil
 }

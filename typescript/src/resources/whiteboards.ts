@@ -1,59 +1,59 @@
 import { HttpClient } from '../http';
 import type {
-  Document,
-  CreateDocumentInput,
-  UpdateDocumentInput,
+  Whiteboard,
+  CreateWhiteboardInput,
+  UpdateWhiteboardInput,
   Comment,
   CreateCommentInput,
   UpdateCommentInput,
-  ListDocumentsOptions,
+  ListWhiteboardsOptions,
   ListOptions,
   PaginatedResponse,
   SingleResponse,
 } from '../types';
 
-export class DocumentsResource {
+export class WhiteboardsResource {
   constructor(private http: HttpClient) {}
 
   // ─── Core CRUD ───────────────────────────────────────────────────────
 
-  async list(options?: ListDocumentsOptions): Promise<PaginatedResponse<Document>> {
+  async list(options?: ListWhiteboardsOptions): Promise<PaginatedResponse<Whiteboard>> {
     const params: Record<string, unknown> = {};
     if (options) {
-      if (options.teamspace_id) params.teamspace_id = options.teamspace_id;
-      if (options.parent_id) params.parent_id = options.parent_id;
-      if (options.type) params.type = options.type;
       if (options.limit) params.limit = options.limit;
       if (options.offset) params.offset = options.offset;
       if (options.search) params.search = options.search;
     }
-    return this.http.get<PaginatedResponse<Document>>('/documents', params);
+    return this.http.get<PaginatedResponse<Whiteboard>>('/whiteboards', params);
   }
 
-  async get(id: string): Promise<Document> {
-    const response = await this.http.get<SingleResponse<Document>>(`/documents/${id}`);
+  async get(id: string): Promise<Whiteboard> {
+    const response = await this.http.get<SingleResponse<Whiteboard>>(`/whiteboards/${id}`);
     return response.data;
   }
 
-  async create(input: CreateDocumentInput): Promise<Document> {
-    const response = await this.http.post<SingleResponse<Document>>('/documents', input);
+  async create(input: CreateWhiteboardInput): Promise<Whiteboard> {
+    const response = await this.http.post<SingleResponse<Whiteboard>>('/whiteboards', input);
     return response.data;
   }
 
-  async update(id: string, input: UpdateDocumentInput): Promise<Document> {
-    const response = await this.http.patch<SingleResponse<Document>>(`/documents/${id}`, input);
+  async update(id: string, input: UpdateWhiteboardInput): Promise<Whiteboard> {
+    const response = await this.http.patch<SingleResponse<Whiteboard>>(
+      `/whiteboards/${id}`,
+      input,
+    );
     return response.data;
   }
 
   async delete(id: string): Promise<void> {
-    await this.http.delete(`/documents/${id}`);
+    await this.http.delete(`/whiteboards/${id}`);
   }
 
   // ─── Comments ─────────────────────────────────────────────────────────
 
-  /** List all comments on a document (requires read:comments scope) */
+  /** List all comments on a whiteboard (requires read:comments scope) */
   async listComments(
-    documentId: string,
+    whiteboardId: string,
     options?: ListOptions,
   ): Promise<PaginatedResponse<Comment>> {
     const params: Record<string, unknown> = {};
@@ -62,15 +62,15 @@ export class DocumentsResource {
       if (options.offset) params.offset = options.offset;
     }
     return this.http.get<PaginatedResponse<Comment>>(
-      `/documents/${documentId}/comments`,
+      `/whiteboards/${whiteboardId}/comments`,
       params,
     );
   }
 
-  /** Add a comment to a document (requires write:comments scope) */
-  async addComment(documentId: string, input: CreateCommentInput): Promise<Comment> {
+  /** Add a comment to a whiteboard (requires write:comments scope) */
+  async addComment(whiteboardId: string, input: CreateCommentInput): Promise<Comment> {
     const response = await this.http.post<SingleResponse<Comment>>(
-      `/documents/${documentId}/comments`,
+      `/whiteboards/${whiteboardId}/comments`,
       input,
     );
     return response.data;

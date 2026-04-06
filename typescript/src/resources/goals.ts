@@ -4,8 +4,12 @@ import type {
   CreateGoalInput,
   UpdateGoalInput,
   Task,
+  Comment,
+  CreateCommentInput,
+  UpdateCommentInput,
   ListGoalsOptions,
   ListTasksOptions,
+  ListOptions,
   PaginatedResponse,
   SingleResponse,
 } from '../types';
@@ -13,22 +17,16 @@ import type {
 export class GoalsResource {
   constructor(private http: HttpClient) {}
 
-  async list(
-    options?: ListGoalsOptions,
-  ): Promise<PaginatedResponse<Goal>> {
-    const params: Record<string, unknown> = {};
+  // ─── Core CRUD ───────────────────────────────────────────────────────
 
+  async list(options?: ListGoalsOptions): Promise<PaginatedResponse<Goal>> {
+    const params: Record<string, unknown> = {};
     if (options) {
       if (options.status) params.status = options.status;
       if (options.limit) params.limit = options.limit;
       if (options.offset) params.offset = options.offset;
     }
-
-    const response = await this.http.get<PaginatedResponse<Goal>>(
-      '/goals',
-      params,
-    );
-    return response;
+    return this.http.get<PaginatedResponse<Goal>>('/goals', params);
   }
 
   async get(id: string): Promise<Goal> {
@@ -37,27 +35,24 @@ export class GoalsResource {
   }
 
   async create(input: CreateGoalInput): Promise<Goal> {
-    const response = await this.http.post<SingleResponse<Goal>>(
-      '/goals',
-      input,
-    );
+    const response = await this.http.post<SingleResponse<Goal>>('/goals', input);
     return response.data;
   }
 
   async update(id: string, input: UpdateGoalInput): Promise<Goal> {
-    const response = await this.http.patch<SingleResponse<Goal>>(
-      `/goals/${id}`,
-      input,
-    );
+    const response = await this.http.patch<SingleResponse<Goal>>(`/goals/${id}`, input);
     return response.data;
   }
 
-  async listTasks(
-    goalId: string,
-    options?: ListTasksOptions,
-  ): Promise<PaginatedResponse<Task>> {
-    const params: Record<string, unknown> = {};
+  async delete(id: string): Promise<void> {
+    await this.http.delete(`/goals/${id}`);
+  }
 
+  // ─── Tasks under a goal ──────────────────────────────────────────────
+
+  /** List tasks associated with a goal (requires read:tasks scope) */
+  async listTasks(goalId: string, options?: ListTasksOptions): Promise<PaginatedResponse<Task>> {
+    const params: Record<string, unknown> = {};
     if (options) {
       if (options.status) params.status = options.status;
       if (options.priority) params.priority = options.priority;
@@ -66,11 +61,41 @@ export class GoalsResource {
       if (options.offset) params.offset = options.offset;
       if (options.search) params.search = options.search;
     }
+    return this.http.get<PaginatedResponse<Task>>(`/goals/${goalId}/tasks`, params);
+  }
 
-    const response = await this.http.get<PaginatedResponse<Task>>(
-      `/goals/${goalId}/tasks`,
-      params,
+  // ─── Comments ─────────────────────────────────────────────────────────
+
+  /** List all comments on a goal (requires read:comments scope) */
+  async listComments(goalId: string, options?: ListOptions): Promise<PaginatedResponse<Comment>> {
+    const params: Record<string, unknown> = {};
+    if (options) {
+      if (options.limit) params.limit = options.limit;
+      if (options.offset) params.offset = options.offset;
+    }
+    return this.http.get<PaginatedResponse<Comment>>(`/goals/${goalId}/comments`, params);
+  }
+
+  /** Add a comment to a goal (requires write:comments scope) */
+  async addComment(goalId: string, input: CreateCommentInput): Promise<Comment> {
+    const response = await this.http.post<SingleResponse<Comment>>(
+      `/goals/${goalId}/comments`,
+      input,
     );
-    return response;
+    return response.data;
+  }
+
+  /** Update a comment (requires write:comments scope) */
+  async updateComment(commentId: string, input: UpdateCommentInput): Promise<Comment> {
+    const response = await this.http.patch<SingleResponse<Comment>>(
+      `/comments/${commentId}`,
+      input,
+    );
+    return response.data;
+  }
+
+  /** Delete a comment (requires write:comments scope) */
+  async deleteComment(commentId: string): Promise<void> {
+    await this.http.delete(`/comments/${commentId}`);
   }
 }
