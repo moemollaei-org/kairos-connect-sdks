@@ -26,10 +26,10 @@ func TestDocumentsList(t *testing.T) {
 					"updated_at": time.Now().UTC().Format(time.RFC3339),
 				},
 			},
-			"total_count": 1,
-			"hasMore":     false,
-			"limit":       10,
-			"offset":      0,
+			"total_count":     1,
+			"hasMore":   false,
+			"limit":     10,
+			"offset":    0,
 		}
 		json.NewEncoder(w).Encode(response)
 	}))
