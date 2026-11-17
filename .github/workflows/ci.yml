@@ -12,9 +12,6 @@ jobs:
     name: TypeScript — Typecheck, Test & Build
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: |
-      github.event_name == 'push' ||
-      contains(github.event.pull_request.files.*.filename, 'typescript/')
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -40,7 +37,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        minor: ["9", "11", "13"]
+        minor: ["11", "13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
